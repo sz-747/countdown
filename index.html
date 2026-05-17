@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Countdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0c10;
+    --bg-grad-1: #11131a;
+    --bg-grad-2: #0b0c10;
+    --fg: #f4f1ea;
+    --muted: #8a8578;
+    --accent-trials: #e8b86b;
+    --accent-hsc: #c97b5a;
+    --line: rgba(244, 241, 234, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: radial-gradient(ellipse at top, var(--bg-grad-1), var(--bg-grad-2));
+    color: var(--fg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 3rem 4rem;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 1.25rem;
+    gap: 2rem;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .tab {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.9rem;
+    cursor: pointer;
+    border-radius: 999px;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .tab:hover { color: var(--fg); }
+
+  .tab.active {
+    color: var(--bg);
+    background: var(--fg);
+  }
+
+  .view { display: none; flex: 1; flex-direction: column; }
+  .view.active { display: flex; }
+  main.view.active {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    padding: 2rem 0;
+  }
+  @media (max-width: 900px) {
+    main.view.active { grid-template-columns: 1fr; gap: 3rem; }
+  }
+
+  .brand {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-style: italic;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+    color: var(--fg);
+  }
+
+  .today {
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    padding: 2rem 0;
+  }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .card .label {
+    font-size: 0.78rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .card .label::before {
+    content: '';
+    width: 28px;
+    height: 1px;
+    background: currentColor;
+    display: inline-block;
+  }
+
+  .card .name {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 2.25rem;
+    letter-spacing: -0.01em;
+  }
+
+  .display {
+    display: flex;
+    align-items: baseline;
+    gap: 1.25rem;
+  }
+
+  .number {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(8rem, 18vw, 16rem);
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg);
+    transition: color 0.4s ease;
+  }
+
+  .card.trials .number { color: var(--accent-trials); }
+  .card.hsc .number    { color: var(--accent-hsc); }
+
+  .unit {
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    font-size: 1rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 1.5rem;
+  }
+
+  .meta {
+    font-size: 0.85rem;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  .meta strong {
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  .progress {
+    margin-top: 0.5rem;
+    height: 2px;
+    background: var(--line);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .progress .bar {
+    position: absolute;
+    inset: 0;
+    transform-origin: left;
+    transition: transform 0.6s ease;
+  }
+
+  .card.trials .progress .bar { background: var(--accent-trials); }
+  .card.hsc    .progress .bar { background: var(--accent-hsc); }
+
+  .ticker {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+
+  .ticker .cell {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .ticker .v {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 1.6rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--fg);
+  }
+
+  .ticker .k {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .card.trials .ticker .v.live,
+  .card.hsc    .ticker .v.live {
+    transition: color 0.15s ease;
+  }
+
+  .year-view {
+    padding: 2rem 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .year-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 2rem;
+  }
+
+  .year-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 1.75rem;
+  }
+
+  .year-figure {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 1rem;
+    color: var(--muted);
+  }
+
+  .year-figure strong {
+    color: var(--fg);
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .year-grid-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .year-grid {
+    display: grid;
+    grid-template-columns: repeat(31, 1fr);
+    gap: 5px;
+    width: 100%;
+    max-width: 1100px;
+  }
+
+  .day {
+    aspect-ratio: 1 / 1;
+    border-radius: 3px;
+    background: rgba(244, 241, 234, 0.05);
+    border: 1px solid var(--line);
+    position: relative;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+
+  .day.past {
+    background: var(--accent-trials);
+    border-color: transparent;
+    opacity: 0.85;
+  }
+
+  .day.today {
+    background: var(--fg);
+    border-color: var(--fg);
+    box-shadow: 0 0 0 2px rgba(244, 241, 234, 0.25);
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+
+  .day.trials { background: var(--accent-trials); border-color: var(--fg); box-shadow: 0 0 0 2px rgba(232, 184, 107, 0.4); }
+  .day.hsc    { background: var(--accent-hsc);    border-color: var(--fg); box-shadow: 0 0 0 2px rgba(201, 123, 90, 0.4); }
+  .day.exam {
+    background: #6ec5b8;
+    border-color: var(--fg);
+    box-shadow: 0 0 0 2px rgba(110, 197, 184, 0.4);
+  }
+  .day.exam.past { opacity: 0.55; }
+
+  .day:hover { transform: scale(1.4); z-index: 2; }
+
+  .day::after {
+    content: attr(data-label);
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg);
+    color: var(--fg);
+    font-size: 0.7rem;
+    padding: 0.35rem 0.55rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .day:hover::after { opacity: 1; }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(244, 241, 234, 0.25); }
+    50%      { box-shadow: 0 0 0 4px rgba(244, 241, 234, 0.15); }
+  }
+
+  .settings-view {
+    padding: 2rem 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-width: 720px;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  .settings-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 1.75rem;
+  }
+
+  .settings-desc {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .exam-form {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr auto;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .exam-form input {
+    background: rgba(244, 241, 234, 0.05);
+    border: 1px solid var(--line);
+    color: var(--fg);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+
+  .exam-form input:focus {
+    border-color: var(--accent-trials);
+  }
+
+  .exam-form input::placeholder { color: var(--muted); }
+
+  .btn {
+    background: var(--fg);
+    color: var(--bg);
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.25rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+
+  .btn:hover { opacity: 0.85; }
+
+  .btn.ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    padding: 0.4rem 0.7rem;
+    font-size: 0.7rem;
+  }
+
+  .btn.ghost:hover { color: var(--fg); border-color: var(--fg); }
+
+  .exam-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .exam-row {
+    display: grid;
+    grid-template-columns: 130px 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: rgba(244, 241, 234, 0.02);
+  }
+
+  .exam-row .date {
+    font-family: 'Fraunces', serif;
+    font-size: 0.95rem;
+    color: var(--accent-trials);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .exam-row .subject {
+    font-size: 0.95rem;
+  }
+
+  .exam-empty {
+    padding: 2rem;
+    text-align: center;
+    color: var(--muted);
+    border: 1px dashed var(--line);
+    border-radius: 6px;
+    font-size: 0.85rem;
+  }
+
+  .legend {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .legend .swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+
+  footer .quote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 0.9rem;
+    letter-spacing: 0;
+    color: var(--muted);
+  }
+
+  @media (max-width: 900px) {
+    .page { padding: 2rem 1.5rem; }
+    main { grid-template-columns: 1fr; gap: 3rem; }
+    .number { font-size: clamp(7rem, 35vw, 12rem); }
+    .ticker { grid-template-columns: repeat(3, 1fr); }
+    .ticker .v { font-size: 1.35rem; }
+    .year-grid { grid-template-columns: repeat(15, 1fr); gap: 4px; }
+    .year-stats { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .exam-form { grid-template-columns: 1fr; }
+    .exam-row { grid-template-columns: 110px 1fr auto; gap: 0.6rem; padding: 0.7rem 0.8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <div class="brand">Year 12 — the long road</div>
+    <div class="tabs">
+      <button class="tab active" data-view="countdown">Countdown</button>
+      <button class="tab" data-view="year">Year</button>
+      <button class="tab" data-view="settings">Settings</button>
+    </div>
+    <div class="today" id="today">—</div>
+  </header>
+
+  <main class="view active" id="view-countdown">
+    <section class="card trials">
+      <div class="label">Trial Exams</div>
+      <div class="name">Trials begin</div>
+      <div class="display">
+        <div class="number" id="trials-num">—</div>
+        <div class="unit" id="trials-unit">days</div>
+      </div>
+      <div class="meta">3 August 2026 · <span id="trials-weekday"></span></div>
+      <div class="ticker" id="trials-ticker">
+        <div class="cell"><span class="v" data-u="months">—</span><span class="k">Months</span></div>
+        <div class="cell"><span class="v" data-u="weeks">—</span><span class="k">Weeks</span></div>
+        <div class="cell"><span class="v" data-u="days">—</span><span class="k">Days</span></div>
+        <div class="cell"><span class="v" data-u="hours">—</span><span class="k">Hours</span></div>
+        <div class="cell"><span class="v" data-u="minutes">—</span><span class="k">Minutes</span></div>
+        <div class="cell"><span class="v live" data-u="seconds">—</span><span class="k">Seconds</span></div>
+      </div>
+      <div class="progress"><div class="bar" id="trials-bar" style="transform: scaleX(0)"></div></div>
+    </section>
+
+    <section class="card hsc">
+      <div class="label">HSC</div>
+      <div class="name">HSC begins</div>
+      <div class="display">
+        <div class="number" id="hsc-num">—</div>
+        <div class="unit" id="hsc-unit">days</div>
+      </div>
+      <div class="meta">13 October 2026 · <span id="hsc-weekday"></span></div>
+      <div class="ticker" id="hsc-ticker">
+        <div class="cell"><span class="v" data-u="months">—</span><span class="k">Months</span></div>
+        <div class="cell"><span class="v" data-u="weeks">—</span><span class="k">Weeks</span></div>
+        <div class="cell"><span class="v" data-u="days">—</span><span class="k">Days</span></div>
+        <div class="cell"><span class="v" data-u="hours">—</span><span class="k">Hours</span></div>
+        <div class="cell"><span class="v" data-u="minutes">—</span><span class="k">Minutes</span></div>
+        <div class="cell"><span class="v live" data-u="seconds">—</span><span class="k">Seconds</span></div>
+      </div>
+      <div class="progress"><div class="bar" id="hsc-bar" style="transform: scaleX(0)"></div></div>
+    </section>
+  </main>
+
+  <section class="view year-view" id="view-year">
+    <div class="year-stats">
+      <div class="year-title">2026 · <span id="year-pct">—</span>% complete</div>
+      <div class="year-figure"><strong id="year-passed">—</strong> of <strong id="year-total">—</strong> days · <strong id="year-left">—</strong> remaining</div>
+    </div>
+    <div class="year-grid-wrap">
+      <div class="year-grid" id="year-grid"></div>
+    </div>
+    <div class="legend">
+      <span><span class="swatch" style="background: var(--accent-trials)"></span>Past</span>
+      <span><span class="swatch" style="background: var(--fg)"></span>Today</span>
+      <span><span class="swatch" style="background: rgba(244,241,234,0.05); border:1px solid var(--line)"></span>Ahead</span>
+      <span><span class="swatch" style="background: #6ec5b8"></span>Exam</span>
+    </div>
+  </section>
+
+  <section class="view settings-view" id="view-settings">
+    <div>
+      <div class="settings-title">Exam timetable</div>
+      <div class="settings-desc">Add each HSC exam date and subject. They'll appear as markers on the Year grid. Saved to this browser only.</div>
+    </div>
+
+    <form class="exam-form" id="exam-form">
+      <input type="date" id="exam-date" required>
+      <input type="text" id="exam-subject" placeholder="Subject (e.g. English Paper 1)" required>
+      <button type="submit" class="btn">Add</button>
+    </form>
+
+    <div class="exam-list" id="exam-list"></div>
+  </section>
+
+  <footer>
+    <div>steady · daily · done</div>
+    <div class="quote">"The best time was yesterday. The next best is now."</div>
+  </footer>
+</div>
+
+<script>
+  const TRIALS = new Date(2026, 7, 3);   // 3 August 2026
+  const HSC    = new Date(2026, 9, 13);  // 13 October 2026
+  const START  = new Date(2026, 0, 28);  // notional Year 12 start for progress bar
+
+  function startOfDay(d) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function daysBetween(a, b) {
+    const ms = startOfDay(b) - startOfDay(a);
+    return Math.round(ms / 86400000);
+  }
+
+  function fmtWeekday(d) {
+    return d.toLocaleDateString('en-AU', { weekday: 'long' });
+  }
+
+  function fmtToday(d) {
+    return d.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  let clockOffsetMs = 0; // serverNow - localNow
+
+  function now() {
+    return new Date(Date.now() + clockOffsetMs);
+  }
+
+  async function syncTime() {
+    try {
+      const res = await fetch('https://www.timeapi.io/api/time/current/zone?timeZone=Australia/Sydney', { cache: 'no-store' });
+      if (!res.ok) return;
+      const data = await res.json();
+      const server = new Date(data.dateTime);
+      if (!isNaN(server)) {
+        clockOffsetMs = server - new Date();
+      }
+    } catch (_) { /* fall back to local clock */ }
+  }
+
+  function update() {
+    const current = now();
+    document.getElementById('today').textContent = fmtToday(current);
+    document.getElementById('trials-weekday').textContent = fmtWeekday(TRIALS);
+    document.getElementById('hsc-weekday').textContent    = fmtWeekday(HSC);
+
+    const dTrials = daysBetween(current, TRIALS);
+    const dHsc    = daysBetween(current, HSC);
+
+    setCountdown('trials', dTrials);
+    setCountdown('hsc', dHsc);
+
+    setProgress('trials-bar', current, START, TRIALS);
+    setProgress('hsc-bar',    current, START, HSC);
+
+    tick();
+    if (document.getElementById('year-grid').children.length) paintYearGrid();
+  }
+
+  function breakdown(from, to) {
+    if (to <= from) return { months: 0, weeks: 0, days: 0, hours: 0, minutes: 0, seconds: 0 };
+    let y = from.getFullYear(), m = from.getMonth(), d = from.getDate();
+    let hh = from.getHours(), mm = from.getMinutes(), ss = from.getSeconds();
+
+    let months = (to.getFullYear() - y) * 12 + (to.getMonth() - m);
+    let cursor = new Date(y, m + months, d, hh, mm, ss);
+    if (cursor > to) {
+      months -= 1;
+      cursor = new Date(y, m + months, d, hh, mm, ss);
+    }
+
+    let remMs = to - cursor;
+    const dayMs = 86400000;
+    let totalDays = Math.floor(remMs / dayMs);
+    remMs -= totalDays * dayMs;
+    const weeks = Math.floor(totalDays / 7);
+    const days = totalDays - weeks * 7;
+    const hours = Math.floor(remMs / 3600000); remMs -= hours * 3600000;
+    const minutes = Math.floor(remMs / 60000);  remMs -= minutes * 60000;
+    const seconds = Math.floor(remMs / 1000);
+
+    return { months, weeks, days, hours, minutes, seconds };
+  }
+
+  function paintTicker(id, parts) {
+    const root = document.getElementById(id);
+    for (const el of root.querySelectorAll('.v')) {
+      el.textContent = parts[el.dataset.u];
+    }
+  }
+
+  function tick() {
+    const current = now();
+    paintTicker('trials-ticker', breakdown(current, TRIALS));
+    paintTicker('hsc-ticker',    breakdown(current, HSC));
+  }
+
+  const YEAR = 2026;
+  function isLeap(y) { return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0; }
+  function dayOfYear(d) {
+    const start = new Date(d.getFullYear(), 0, 1);
+    return Math.floor((startOfDay(d) - start) / 86400000) + 1;
+  }
+
+  function buildYearGrid() {
+    const grid = document.getElementById('year-grid');
+    grid.innerHTML = '';
+    const total = isLeap(YEAR) ? 366 : 365;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    for (let i = 0; i < total; i++) {
+      const d = new Date(YEAR, 0, 1 + i);
+      const cell = document.createElement('div');
+      cell.className = 'day';
+      cell.dataset.idx = i;
+      cell.dataset.label = `${months[d.getMonth()]} ${d.getDate()} · day ${i+1}`;
+      grid.appendChild(cell);
+    }
+    document.getElementById('year-total').textContent = total;
+  }
+
+  function paintYearGrid() {
+    const current = now();
+    const total = isLeap(YEAR) ? 366 : 365;
+    const trialsIdx = dayOfYear(TRIALS) - 1;
+    const hscIdx    = dayOfYear(HSC) - 1;
+    const todayIdx  = current.getFullYear() === YEAR ? dayOfYear(current) - 1 : (current.getFullYear() < YEAR ? -1 : total);
+
+    const examsByIdx = new Map();
+    loadExams().forEach(exam => {
+      const [y, m, d] = exam.date.split('-').map(Number);
+      if (y !== YEAR) return;
+      const idx = dayOfYear(new Date(y, m - 1, d)) - 1;
+      if (!examsByIdx.has(idx)) examsByIdx.set(idx, []);
+      examsByIdx.get(idx).push(exam.subject);
+    });
+
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const cells = document.querySelectorAll('#year-grid .day');
+    let passed = 0;
+    cells.forEach((cell, i) => {
+      cell.classList.remove('past','today','trials','hsc','exam');
+      if (i < todayIdx) { cell.classList.add('past'); passed++; }
+      if (i === todayIdx) cell.classList.add('today');
+      if (i === trialsIdx) cell.classList.add('trials');
+      if (i === hscIdx)    cell.classList.add('hsc');
+      if (examsByIdx.has(i)) cell.classList.add('exam');
+
+      const d = new Date(YEAR, 0, 1 + i);
+      let label = `${months[d.getMonth()]} ${d.getDate()} · day ${i+1}`;
+      if (examsByIdx.has(i)) label += ' · ' + examsByIdx.get(i).join(', ');
+      cell.dataset.label = label;
+    });
+
+    document.getElementById('year-passed').textContent = passed;
+    document.getElementById('year-left').textContent = total - passed;
+    document.getElementById('year-pct').textContent = (passed / total * 100).toFixed(1);
+  }
+
+  const EXAMS_KEY = 'countdown.exams.v1';
+  function loadExams() {
+    try { return JSON.parse(localStorage.getItem(EXAMS_KEY) || '[]'); }
+    catch (_) { return []; }
+  }
+  function saveExams(list) {
+    localStorage.setItem(EXAMS_KEY, JSON.stringify(list));
+  }
+
+  function fmtExamDate(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return dt.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+
+  function renderExamList() {
+    const list = loadExams().sort((a, b) => a.date.localeCompare(b.date));
+    const root = document.getElementById('exam-list');
+    if (!list.length) {
+      root.innerHTML = '<div class="exam-empty">No exams added yet. Add your first above.</div>';
+      return;
+    }
+    root.innerHTML = '';
+    list.forEach(exam => {
+      const row = document.createElement('div');
+      row.className = 'exam-row';
+      row.innerHTML = `
+        <span class="date">${fmtExamDate(exam.date)}</span>
+        <span class="subject"></span>
+        <button class="btn ghost" data-id="${exam.id}">Remove</button>
+      `;
+      row.querySelector('.subject').textContent = exam.subject;
+      row.querySelector('button').addEventListener('click', () => {
+        saveExams(loadExams().filter(e => e.id !== exam.id));
+        renderExamList();
+        paintYearGrid();
+      });
+      root.appendChild(row);
+    });
+  }
+
+  function setupExamForm() {
+    const form = document.getElementById('exam-form');
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const date = document.getElementById('exam-date').value;
+      const subject = document.getElementById('exam-subject').value.trim();
+      if (!date || !subject) return;
+      const exams = loadExams();
+      exams.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 7), date, subject });
+      saveExams(exams);
+      form.reset();
+      renderExamList();
+      paintYearGrid();
+    });
+  }
+
+  function setupTabs() {
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('view-' + btn.dataset.view).classList.add('active');
+      });
+    });
+  }
+
+  function setCountdown(prefix, days) {
+    const numEl = document.getElementById(prefix + '-num');
+    const unitEl = document.getElementById(prefix + '-unit');
+    if (days > 0) {
+      numEl.textContent = days;
+      unitEl.textContent = days === 1 ? 'day' : 'days';
+    } else if (days === 0) {
+      numEl.textContent = '0';
+      unitEl.textContent = 'today';
+    } else {
+      numEl.textContent = Math.abs(days);
+      unitEl.textContent = 'days ago';
+    }
+  }
+
+  function setProgress(barId, now, start, end) {
+    const total = end - start;
+    const elapsed = now - start;
+    const pct = Math.max(0, Math.min(1, elapsed / total));
+    document.getElementById(barId).style.transform = `scaleX(${pct})`;
+  }
+
+  (async () => {
+    buildYearGrid();
+    setupTabs();
+    setupExamForm();
+    renderExamList();
+    await syncTime();
+    update();
+    paintYearGrid();
+    scheduleNextMidnight();
+    setInterval(tick, 1000);
+  })();
+
+  function scheduleNextMidnight() {
+    const current = now();
+    const next = new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1, 0, 0, 5);
+    setTimeout(async () => { await syncTime(); update(); scheduleNextMidnight(); }, next - current);
+  }
+
+  setInterval(async () => { await syncTime(); update(); }, 60 * 60 * 1000);
+</script>
+</body>
+</html>
