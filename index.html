@@ -16,6 +16,7 @@
     --muted: #8a8578;
     --accent-trials: #e8b86b;
     --accent-hsc: #c97b5a;
+    --accent-assess: #8ab4d8;
     --line: rgba(244, 241, 234, 0.08);
   }
 
@@ -342,6 +343,87 @@
     50%      { box-shadow: 0 0 0 4px rgba(244, 241, 234, 0.15); }
   }
 
+  .assess-view {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    padding: 2rem 0;
+  }
+  .assess-view.active { display: flex; }
+
+  .assess-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem 3rem;
+    flex: 1;
+    align-content: center;
+  }
+
+  .assess-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+
+  .assess-card .label {
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent-assess);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .assess-card .label::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: currentColor;
+    display: inline-block;
+  }
+
+  .assess-card .name {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: 1.25rem;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+
+  .assess-card .display {
+    align-items: baseline;
+    gap: 0.7rem;
+  }
+
+  .assess-card .number {
+    font-size: clamp(3.5rem, 6.5vw, 5.5rem);
+    color: var(--accent-assess);
+  }
+
+  .assess-card .unit {
+    font-size: 0.72rem;
+    padding-bottom: 0.65rem;
+  }
+
+  .assess-card .meta {
+    font-size: 0.75rem;
+  }
+
+  .assess-card .ticker {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.4rem;
+    margin-top: 0.15rem;
+  }
+  .assess-card .ticker .cell { padding: 0.5rem 0; gap: 0.25rem; }
+  .assess-card .ticker .v { font-size: 1rem; }
+  .assess-card .ticker .k { font-size: 0.55rem; letter-spacing: 0.16em; }
+
+  .assess-card .progress .bar { background: var(--accent-assess); }
+
+  @media (max-width: 900px) {
+    .assess-grid { grid-template-columns: 1fr; gap: 2rem; }
+  }
+
   .settings-view {
     padding: 2rem 0;
     flex: 1;
@@ -509,6 +591,7 @@
     <div class="brand">Year 12 — the long road</div>
     <div class="tabs">
       <button class="tab active" data-view="countdown">Countdown</button>
+      <button class="tab" data-view="assess">Assessments</button>
       <button class="tab" data-view="year">Year</button>
       <button class="tab" data-view="settings">Settings</button>
     </div>
@@ -555,6 +638,10 @@
     </section>
   </main>
 
+  <section class="view assess-view" id="view-assess">
+    <div class="assess-grid" id="assess-grid"></div>
+  </section>
+
   <section class="view year-view" id="view-year">
     <div class="year-stats">
       <div class="year-title">2026 · <span id="year-pct">—</span>% complete</div>
@@ -596,6 +683,15 @@
   const TRIALS = new Date(2026, 7, 3);   // 3 August 2026
   const HSC    = new Date(2026, 9, 13);  // 13 October 2026
   const START  = new Date(2026, 0, 28);  // notional Year 12 start for progress bar
+
+  const ASSESSMENTS = [
+    { id: 'eng-at3',      label: 'English Adv · AT3',   name: 'English Advanced AT3',    date: new Date(2026, 4, 22, 8, 30) },
+    { id: 'legal-at3',    label: 'Legal · AT3',         name: 'Legal — Family Law AT3',  date: new Date(2026, 4, 29, 14, 20) },
+    { id: 'eng3-at2',     label: 'English Ext 1 · AT2', name: '3U English Portfolio AT2', date: new Date(2026, 5, 1, 7, 30) },
+    { id: 'math-adv',     label: 'Math Advanced',       name: 'Math Advanced',           date: new Date(2026, 5, 3, 8, 30), noTime: true },
+    { id: 'math-ext1',    label: 'Math Ext 1',          name: '3U Math',                 date: new Date(2026, 5, 15, 8, 30), noTime: true },
+    { id: 'software-at3', label: 'Software · AT3',      name: 'Software Project AT3',    date: new Date(2026, 5, 24, 8, 30), noTime: true },
+  ];
 
   function startOfDay(d) {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -647,6 +743,7 @@
     setProgress('trials-bar', current, START, TRIALS);
     setProgress('hsc-bar',    current, START, HSC);
 
+    updateAssessments();
     tick();
     if (document.getElementById('year-grid').children.length) paintYearGrid();
   }
@@ -687,6 +784,55 @@
     const current = now();
     paintTicker('trials-ticker', breakdown(current, TRIALS));
     paintTicker('hsc-ticker',    breakdown(current, HSC));
+    ASSESSMENTS.forEach(a => paintTicker('assess-ticker-' + a.id, breakdown(current, a.date)));
+  }
+
+  function fmtAssessDate(d, noTime) {
+    const date = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'long' });
+    if (noTime) return date;
+    const time = d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
+    return `${date} · ${time}`;
+  }
+
+  function buildAssessCards() {
+    const grid = document.getElementById('assess-grid');
+    grid.innerHTML = '';
+    ASSESSMENTS.forEach(a => {
+      const card = document.createElement('section');
+      card.className = 'card assess-card';
+      card.innerHTML = `
+        <div class="label"><span></span></div>
+        <div class="name"></div>
+        <div class="display">
+          <div class="number" id="assess-num-${a.id}">—</div>
+          <div class="unit" id="assess-unit-${a.id}">days</div>
+        </div>
+        <div class="meta"></div>
+        <div class="ticker" id="assess-ticker-${a.id}">
+          <div class="cell"><span class="v" data-u="days">—</span><span class="k">Days</span></div>
+          <div class="cell"><span class="v" data-u="hours">—</span><span class="k">Hours</span></div>
+          <div class="cell"><span class="v live" data-u="minutes">—</span><span class="k">Mins</span></div>
+        </div>
+        <div class="progress"><div class="bar" id="assess-bar-${a.id}" style="transform: scaleX(0)"></div></div>
+      `;
+      card.querySelector('.label span').textContent = a.label;
+      card.querySelector('.name').textContent = a.name;
+      card.querySelector('.meta').textContent = fmtAssessDate(a.date, a.noTime);
+      grid.appendChild(card);
+    });
+  }
+
+  function updateAssessments() {
+    const current = now();
+    ASSESSMENTS.forEach(a => {
+      const days = daysBetween(current, a.date);
+      const numEl = document.getElementById('assess-num-' + a.id);
+      const unitEl = document.getElementById('assess-unit-' + a.id);
+      if (days > 0) { numEl.textContent = days; unitEl.textContent = days === 1 ? 'day' : 'days'; }
+      else if (days === 0) { numEl.textContent = '0'; unitEl.textContent = 'today'; }
+      else { numEl.textContent = Math.abs(days); unitEl.textContent = 'days ago'; }
+      setProgress('assess-bar-' + a.id, current, START, a.date);
+    });
   }
 
   const YEAR = 2026;
@@ -871,6 +1017,7 @@
 
   (async () => {
     buildYearGrid();
+    buildAssessCards();
     setupTabs();
     seedDefaultExams();
     setupExamForm();
