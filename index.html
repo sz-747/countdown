@@ -600,6 +600,7 @@
     <div class="tabs">
       <button class="tab active" data-view="countdown">Countdown</button>
       <button class="tab" data-view="assess">Assessments</button>
+      <button class="tab" data-view="ua">UA</button>
       <button class="tab" data-view="year">Year</button>
       <button class="tab" data-view="settings">Settings</button>
     </div>
@@ -648,6 +649,10 @@
 
   <section class="view assess-view" id="view-assess">
     <div class="assess-grid" id="assess-grid"></div>
+  </section>
+
+  <section class="view assess-view" id="view-ua">
+    <div class="assess-grid" id="ua-grid"></div>
   </section>
 
   <section class="view year-view" id="view-year">
@@ -701,6 +706,14 @@
     { id: 'software-at3', label: 'Software · AT3',      name: 'Software Project AT3',    date: new Date(2026, 5, 24, 8, 30), noTime: true },
   ];
 
+  const UA = [
+    { id: 'cloud-beta',    label: 'Cloud · Beta',        name: 'Cloud Beta Launch',      date: new Date(2026, 4, 23, 0, 0), noTime: true },
+    { id: 'first-client',  label: 'Client · Onboard',    name: 'First client onboard',   date: new Date(2026, 4, 24, 0, 0), noTime: true },
+    { id: 'codex-end',     label: 'Codex · End',         name: 'Codex end',              date: new Date(2026, 4, 29, 0, 0), noTime: true },
+    { id: 'claude-20x',    label: 'Claude 20x · End',    name: 'Claude 20x end',         date: new Date(2026, 5, 4, 0, 0), noTime: true },
+    { id: 'v2-ship',       label: 'V2 · Ship',           name: 'V2 ship',                date: new Date(2026, 5, 6, 0, 0), noTime: true },
+  ];
+
   function startOfDay(d) {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   }
@@ -751,7 +764,8 @@
     setProgress('trials-bar', current, START, TRIALS);
     setProgress('hsc-bar',    current, START, HSC);
 
-    updateAssessments();
+    updateAssessments(ASSESSMENTS);
+    updateAssessments(UA);
     tick();
     if (document.getElementById('year-grid').children.length) paintYearGrid();
   }
@@ -793,6 +807,7 @@
     paintTicker('trials-ticker', breakdown(current, TRIALS));
     paintTicker('hsc-ticker',    breakdown(current, HSC));
     ASSESSMENTS.forEach(a => paintTicker('assess-ticker-' + a.id, simpleBreakdown(current, a.date)));
+    UA.forEach(a => paintTicker('assess-ticker-' + a.id, simpleBreakdown(current, a.date)));
   }
 
   function simpleBreakdown(from, to) {
@@ -812,10 +827,10 @@
     return `${date} · ${time}`;
   }
 
-  function buildAssessCards() {
-    const grid = document.getElementById('assess-grid');
+  function buildAssessCards(list = ASSESSMENTS, gridId = 'assess-grid') {
+    const grid = document.getElementById(gridId);
     grid.innerHTML = '';
-    ASSESSMENTS.forEach(a => {
+    list.forEach(a => {
       const card = document.createElement('section');
       card.className = 'card assess-card';
       card.innerHTML = `
@@ -841,13 +856,13 @@
     });
   }
 
-  function updateAssessments() {
+  function updateAssessments(list = ASSESSMENTS) {
     const current = now();
-    const future = ASSESSMENTS.filter(a => a.date > current);
+    const future = list.filter(a => a.date > current);
     const maxRemainingMs = future.length
       ? Math.max(...future.map(a => a.date - current))
       : 1;
-    ASSESSMENTS.forEach(a => {
+    list.forEach(a => {
       const days = daysBetween(current, a.date);
       const numEl = document.getElementById('assess-num-' + a.id);
       const unitEl = document.getElementById('assess-unit-' + a.id);
@@ -1054,7 +1069,8 @@
 
   (async () => {
     buildYearGrid();
-    buildAssessCards();
+    buildAssessCards(ASSESSMENTS, 'assess-grid');
+    buildAssessCards(UA, 'ua-grid');
     setupTabs();
     seedDefaultExams();
     setupExamForm();
