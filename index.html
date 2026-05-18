@@ -395,10 +395,18 @@
     gap: 0.7rem;
   }
 
+  .assess-card {
+    --card-accent: var(--accent-assess);
+  }
+
   .assess-card .number {
     font-size: clamp(3.5rem, 6.5vw, 5.5rem);
-    color: var(--accent-assess);
+    color: var(--card-accent);
+    transition: color 0.4s ease;
   }
+
+  .assess-card .label { color: var(--card-accent); }
+  .assess-card .progress .bar { background: var(--card-accent); transition: background 0.4s ease; }
 
   .assess-card .unit {
     font-size: 0.72rem;
@@ -835,6 +843,10 @@
 
   function updateAssessments() {
     const current = now();
+    const future = ASSESSMENTS.filter(a => a.date > current);
+    const maxRemainingMs = future.length
+      ? Math.max(...future.map(a => a.date - current))
+      : 1;
     ASSESSMENTS.forEach(a => {
       const days = daysBetween(current, a.date);
       const numEl = document.getElementById('assess-num-' + a.id);
@@ -842,8 +854,22 @@
       if (days > 0) { numEl.textContent = days; unitEl.textContent = days === 1 ? 'day' : 'days'; }
       else if (days === 0) { numEl.textContent = '0'; unitEl.textContent = 'today'; }
       else { numEl.textContent = Math.abs(days); unitEl.textContent = 'days ago'; }
-      setProgress('assess-bar-' + a.id, current, START, a.date);
+
+      const remaining = Math.max(0, a.date - current);
+      const pct = a.date <= current ? 1 : 1 - (remaining / maxRemainingMs);
+      document.getElementById('assess-bar-' + a.id).style.transform = `scaleX(${pct})`;
+
+      const card = document.getElementById('assess-bar-' + a.id).closest('.assess-card');
+      card.style.setProperty('--card-accent', urgencyColor(days));
     });
+  }
+
+  function urgencyColor(days) {
+    if (days < 0)  return '#5f6470';   // past — muted
+    if (days <= 2) return '#e74c3c';   // red — imminent
+    if (days <= 7) return '#f39c12';   // orange — this week
+    if (days <= 14) return '#e8b86b';  // amber — next two weeks
+    return '#8ab4d8';                  // blue — plenty of time
   }
 
   const YEAR = 2026;
