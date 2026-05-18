@@ -410,8 +410,8 @@
   }
 
   .assess-card .ticker {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.4rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.35rem;
     margin-top: 0.15rem;
   }
   .assess-card .ticker .cell { padding: 0.5rem 0; gap: 0.25rem; }
@@ -784,7 +784,17 @@
     const current = now();
     paintTicker('trials-ticker', breakdown(current, TRIALS));
     paintTicker('hsc-ticker',    breakdown(current, HSC));
-    ASSESSMENTS.forEach(a => paintTicker('assess-ticker-' + a.id, breakdown(current, a.date)));
+    ASSESSMENTS.forEach(a => paintTicker('assess-ticker-' + a.id, simpleBreakdown(current, a.date)));
+  }
+
+  function simpleBreakdown(from, to) {
+    let ms = to - from;
+    if (ms <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    const days = Math.floor(ms / 86400000); ms -= days * 86400000;
+    const hours = Math.floor(ms / 3600000); ms -= hours * 3600000;
+    const minutes = Math.floor(ms / 60000); ms -= minutes * 60000;
+    const seconds = Math.floor(ms / 1000);
+    return { days, hours, minutes, seconds };
   }
 
   function fmtAssessDate(d, noTime) {
@@ -811,7 +821,8 @@
         <div class="ticker" id="assess-ticker-${a.id}">
           <div class="cell"><span class="v" data-u="days">—</span><span class="k">Days</span></div>
           <div class="cell"><span class="v" data-u="hours">—</span><span class="k">Hours</span></div>
-          <div class="cell"><span class="v live" data-u="minutes">—</span><span class="k">Mins</span></div>
+          <div class="cell"><span class="v" data-u="minutes">—</span><span class="k">Mins</span></div>
+          <div class="cell"><span class="v live" data-u="seconds">—</span><span class="k">Secs</span></div>
         </div>
         <div class="progress"><div class="bar" id="assess-bar-${a.id}" style="transform: scaleX(0)"></div></div>
       `;
