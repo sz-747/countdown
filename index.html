@@ -101,6 +101,42 @@
     color: var(--muted);
   }
 
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .fs-btn {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    padding: 0;
+  }
+
+  .fs-btn:hover {
+    color: var(--fg);
+    border-color: var(--fg);
+  }
+
+  .fs-btn svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+  }
+
+  .fs-btn .icon-exit { display: none; }
+  body.is-fullscreen .fs-btn .icon-enter { display: none; }
+  body.is-fullscreen .fs-btn .icon-exit { display: block; }
+
   main {
     flex: 1;
     display: grid;
@@ -604,7 +640,23 @@
       <button class="tab" data-view="year">Year</button>
       <button class="tab" data-view="settings">Settings</button>
     </div>
-    <div class="today" id="today">—</div>
+    <div class="header-right">
+      <div class="today" id="today">—</div>
+      <button class="fs-btn" id="fs-toggle" type="button" title="Toggle fullscreen" aria-label="Toggle fullscreen">
+        <svg class="icon-enter" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9V4h5"></path>
+          <path d="M20 9V4h-5"></path>
+          <path d="M4 15v5h5"></path>
+          <path d="M20 15v5h-5"></path>
+        </svg>
+        <svg class="icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 4v5H4"></path>
+          <path d="M15 4v5h5"></path>
+          <path d="M9 20v-5H4"></path>
+          <path d="M15 20v-5h5"></path>
+        </svg>
+      </button>
+    </div>
   </header>
 
   <main class="view active" id="view-countdown">
@@ -1079,6 +1131,30 @@
   }
 
   setInterval(async () => { await syncTime(); update(); }, 60 * 60 * 1000);
+
+  const fsBtn = document.getElementById('fs-toggle');
+  function fsElement() {
+    return document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+  }
+  function updateFsState() {
+    document.body.classList.toggle('is-fullscreen', !!fsElement());
+  }
+  fsBtn.addEventListener('click', () => {
+    if (fsElement()) {
+      (document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen).call(document);
+    } else {
+      const el = document.documentElement;
+      (el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen).call(el);
+    }
+  });
+  document.addEventListener('fullscreenchange', updateFsState);
+  document.addEventListener('webkitfullscreenchange', updateFsState);
+  document.addEventListener('msfullscreenchange', updateFsState);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'f' && !e.ctrlKey && !e.metaKey && !e.altKey && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) {
+      fsBtn.click();
+    }
+  });
 </script>
 </body>
 </html>
