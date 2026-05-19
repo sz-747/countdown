@@ -315,10 +315,21 @@
 
   .year-grid {
     display: grid;
-    grid-template-columns: repeat(31, 1fr);
+    grid-template-columns: auto repeat(31, 1fr);
     gap: 5px;
     width: 100%;
     max-width: 1100px;
+    align-items: center;
+  }
+
+  .month-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-right: 0.5rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
   }
 
   .day {
@@ -330,10 +341,15 @@
     transition: background 0.2s ease, transform 0.15s ease;
   }
 
-  .day.past {
-    background: var(--accent-trials);
+  .day.empty {
+    background: transparent;
     border-color: transparent;
-    opacity: 0.85;
+    pointer-events: none;
+  }
+
+  .day.past {
+    background: rgba(244, 241, 234, 0.22);
+    border-color: transparent;
   }
 
   .day.today {
@@ -350,7 +366,7 @@
     border-color: var(--fg);
     box-shadow: 0 0 0 2px rgba(110, 197, 184, 0.4);
   }
-  .day.exam.past { opacity: 0.55; }
+  .day.exam.past, .day.trials.past, .day.hsc.past { opacity: 0.55; }
 
   .day:hover { transform: scale(1.4); z-index: 2; }
 
@@ -622,7 +638,8 @@
     .number { font-size: clamp(7rem, 35vw, 12rem); }
     .ticker { grid-template-columns: repeat(3, 1fr); }
     .ticker .v { font-size: 1.35rem; }
-    .year-grid { grid-template-columns: repeat(15, 1fr); gap: 4px; }
+    .year-grid { gap: 3px; }
+    .month-label { font-size: 0.6rem; letter-spacing: 0.1em; padding-right: 0.35rem; }
     .year-stats { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
     .exam-form { grid-template-columns: 1fr; }
     .exam-row { grid-template-columns: 110px 1fr auto; gap: 0.6rem; padding: 0.7rem 0.8rem; }
@@ -716,9 +733,11 @@
       <div class="year-grid" id="year-grid"></div>
     </div>
     <div class="legend">
-      <span><span class="swatch" style="background: var(--accent-trials)"></span>Past</span>
+      <span><span class="swatch" style="background: rgba(244,241,234,0.22)"></span>Past</span>
       <span><span class="swatch" style="background: var(--fg)"></span>Today</span>
       <span><span class="swatch" style="background: rgba(244,241,234,0.05); border:1px solid var(--line)"></span>Ahead</span>
+      <span><span class="swatch" style="background: var(--accent-trials)"></span>Trials</span>
+      <span><span class="swatch" style="background: var(--accent-hsc)"></span>HSC</span>
       <span><span class="swatch" style="background: #6ec5b8"></span>Exam</span>
     </div>
   </section>
@@ -941,13 +960,25 @@
     grid.innerHTML = '';
     const total = isLeap(YEAR) ? 366 : 365;
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    for (let i = 0; i < total; i++) {
-      const d = new Date(YEAR, 0, 1 + i);
-      const cell = document.createElement('div');
-      cell.className = 'day';
-      cell.dataset.idx = i;
-      cell.dataset.label = `${months[d.getMonth()]} ${d.getDate()} · day ${i+1}`;
-      grid.appendChild(cell);
+    let idx = 0;
+    for (let m = 0; m < 12; m++) {
+      const label = document.createElement('div');
+      label.className = 'month-label';
+      label.textContent = months[m];
+      grid.appendChild(label);
+      const daysInMonth = new Date(YEAR, m + 1, 0).getDate();
+      for (let d = 1; d <= 31; d++) {
+        const cell = document.createElement('div');
+        if (d > daysInMonth) {
+          cell.className = 'day empty';
+        } else {
+          cell.className = 'day';
+          cell.dataset.idx = idx;
+          cell.dataset.label = `${months[m]} ${d} · day ${idx + 1}`;
+          idx++;
+        }
+        grid.appendChild(cell);
+      }
     }
     document.getElementById('year-total').textContent = total;
   }
@@ -969,7 +1000,7 @@
     });
 
     const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    const cells = document.querySelectorAll('#year-grid .day');
+    const cells = document.querySelectorAll('#year-grid .day:not(.empty)');
     let passed = 0;
     cells.forEach((cell, i) => {
       cell.classList.remove('past','today','trials','hsc','exam');
