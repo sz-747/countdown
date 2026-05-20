@@ -612,6 +612,143 @@
     border-color: var(--fg);
   }
 
+  .dp { position: relative; display: flex; }
+
+  .dp-trigger {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    background: rgba(244, 241, 234, 0.05);
+    border: 1px solid var(--line);
+    color: var(--fg);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s ease;
+  }
+  .dp-trigger.dp-empty { color: var(--muted); }
+  .dp-trigger:hover { border-color: var(--fg); }
+  .dp-trigger:focus { outline: none; border-color: var(--accent-trials); }
+
+  .dp-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.7; }
+
+  .dp-popup {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 50;
+    width: 280px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+  .dp-popup[hidden] { display: none; }
+
+  .dp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 0.25rem 0.5rem;
+  }
+  .dp-month {
+    font-family: 'Fraunces', serif;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+  }
+  .dp-nav {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 4px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .dp-nav:hover { border-color: var(--fg); color: var(--fg); }
+
+  .dp-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    margin-bottom: 4px;
+  }
+  .dp-weekdays div {
+    text-align: center;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0.35rem 0;
+  }
+
+  .dp-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+  .dp-day {
+    aspect-ratio: 1;
+    background: rgba(244, 241, 234, 0.03);
+    border: 1px solid transparent;
+    color: var(--fg);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+  }
+  .dp-day:hover { background: rgba(244, 241, 234, 0.12); }
+  .dp-day.empty { background: transparent; pointer-events: none; }
+  .dp-day.today { border-color: var(--muted); }
+  .dp-day.selected {
+    background: var(--fg);
+    color: var(--bg);
+    font-weight: 600;
+  }
+
+  .dp-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--line);
+  }
+  .dp-today-btn, .dp-clear-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 4px;
+    padding: 0.35rem 0.75rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  .dp-today-btn:hover, .dp-clear-btn:hover { color: var(--fg); border-color: var(--fg); }
+
+  .exam-row .dp { width: 100%; }
+  .exam-row .dp-trigger { padding: 0.45rem 0.6rem; font-size: 0.9rem; }
+
   .exam-empty {
     padding: 2rem;
     text-align: center;
@@ -780,7 +917,7 @@
     </div>
 
     <form class="exam-form" id="assess-form">
-      <input type="date" id="assess-date" required>
+      <div id="assess-date-host"></div>
       <input type="text" id="assess-subject" placeholder="Subject (e.g. Chemistry AT3)" required>
       <button type="submit" class="btn">Add</button>
     </form>
@@ -793,7 +930,7 @@
     </div>
 
     <form class="exam-form" id="exam-form">
-      <input type="date" id="exam-date" required>
+      <div id="exam-date-host"></div>
       <input type="text" id="exam-subject" placeholder="Subject (e.g. English Paper 1)" required>
       <button type="submit" class="btn">Add</button>
     </form>
@@ -1150,18 +1287,27 @@
   function buildExamEditRow(exam) {
     const row = document.createElement('div');
     row.className = 'exam-row';
-    row.innerHTML = `
-      <input type="date" class="edit-date" value="${exam.date}" required>
-      <input type="text" class="edit-subject" placeholder="Subject" required>
-      <div class="actions">
-        <button class="btn ghost row-save">Save</button>
-        <button class="btn ghost row-cancel">Cancel</button>
-      </div>
+    const dateCell = document.createElement('div');
+    const picker = createDatePicker(exam.date);
+    dateCell.appendChild(picker);
+    row.appendChild(dateCell);
+    const subjectInput = document.createElement('input');
+    subjectInput.type = 'text';
+    subjectInput.className = 'edit-subject';
+    subjectInput.placeholder = 'Subject';
+    subjectInput.required = true;
+    subjectInput.value = exam.subject;
+    row.appendChild(subjectInput);
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    actions.innerHTML = `
+      <button type="button" class="btn ghost row-save">Save</button>
+      <button type="button" class="btn ghost row-cancel">Cancel</button>
     `;
-    row.querySelector('.edit-subject').value = exam.subject;
-    row.querySelector('.row-save').addEventListener('click', () => {
-      const date = row.querySelector('.edit-date').value;
-      const subject = row.querySelector('.edit-subject').value.trim();
+    row.appendChild(actions);
+    actions.querySelector('.row-save').addEventListener('click', () => {
+      const date = picker.getValue();
+      const subject = subjectInput.value.trim();
       if (!date || !subject) return;
       const updated = loadExams().map(e => e.id === exam.id ? { ...e, date, subject } : e);
       saveExams(updated);
@@ -1169,23 +1315,173 @@
       paintYearGrid();
       rebuildHsc();
     });
-    row.querySelector('.row-cancel').addEventListener('click', () => {
+    actions.querySelector('.row-cancel').addEventListener('click', () => {
       row.replaceWith(buildExamRow(exam));
     });
     return row;
   }
 
+  function parseISODate(s) {
+    if (!s) return null;
+    const [y, m, d] = s.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  function isoDate(y, m, d) {
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+  }
+
+  function createDatePicker(initial = '') {
+    const wrap = document.createElement('div');
+    wrap.className = 'dp';
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'dp-trigger';
+    trigger.dataset.value = initial;
+    trigger.innerHTML = `
+      <span class="dp-trigger-text"></span>
+      <svg class="dp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="17" rx="2"></rect>
+        <path d="M3 9h18"></path>
+        <path d="M8 2v4"></path>
+        <path d="M16 2v4"></path>
+      </svg>
+    `;
+
+    const popup = document.createElement('div');
+    popup.className = 'dp-popup';
+    popup.hidden = true;
+
+    wrap.appendChild(trigger);
+    wrap.appendChild(popup);
+
+    const init = parseISODate(initial);
+    let displayed = init
+      ? { year: init.getFullYear(), month: init.getMonth() }
+      : (() => { const t = new Date(); return { year: t.getFullYear(), month: t.getMonth() }; })();
+
+    function updateTriggerLabel() {
+      const v = trigger.dataset.value;
+      const text = trigger.querySelector('.dp-trigger-text');
+      if (v) {
+        const d = parseISODate(v);
+        text.textContent = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+        trigger.classList.remove('dp-empty');
+      } else {
+        text.textContent = 'Pick a date';
+        trigger.classList.add('dp-empty');
+      }
+    }
+
+    function renderPopup() {
+      const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const weekdays = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+      const { year, month } = displayed;
+      const firstDow = (new Date(year, month, 1).getDay() + 6) % 7;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const selectedStr = trigger.dataset.value;
+      const today = new Date();
+      const todayStr = isoDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
+      let html = `
+        <div class="dp-header">
+          <button type="button" class="dp-nav" data-dir="-1" aria-label="Previous month">‹</button>
+          <div class="dp-month">${monthNames[month]} ${year}</div>
+          <button type="button" class="dp-nav" data-dir="1" aria-label="Next month">›</button>
+        </div>
+        <div class="dp-weekdays">${weekdays.map(w => `<div>${w}</div>`).join('')}</div>
+        <div class="dp-days">
+      `;
+      for (let i = 0; i < firstDow; i++) html += `<div class="dp-day empty"></div>`;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const ds = isoDate(year, month + 1, d);
+        const cls = ['dp-day'];
+        if (ds === selectedStr) cls.push('selected');
+        if (ds === todayStr) cls.push('today');
+        html += `<button type="button" class="${cls.join(' ')}" data-date="${ds}">${d}</button>`;
+      }
+      html += `</div>
+        <div class="dp-footer">
+          <button type="button" class="dp-today-btn">Today</button>
+          <button type="button" class="dp-clear-btn">Clear</button>
+        </div>`;
+      popup.innerHTML = html;
+
+      popup.querySelectorAll('.dp-nav').forEach(b => {
+        b.addEventListener('click', () => {
+          displayed.month += parseInt(b.dataset.dir, 10);
+          if (displayed.month < 0)  { displayed.month = 11; displayed.year--; }
+          if (displayed.month > 11) { displayed.month = 0;  displayed.year++; }
+          renderPopup();
+        });
+      });
+      popup.querySelectorAll('.dp-day:not(.empty)').forEach(b => {
+        b.addEventListener('click', () => {
+          trigger.dataset.value = b.dataset.date;
+          updateTriggerLabel();
+          close();
+        });
+      });
+      popup.querySelector('.dp-today-btn').addEventListener('click', () => {
+        const t = new Date();
+        trigger.dataset.value = isoDate(t.getFullYear(), t.getMonth() + 1, t.getDate());
+        displayed = { year: t.getFullYear(), month: t.getMonth() };
+        updateTriggerLabel();
+        close();
+      });
+      popup.querySelector('.dp-clear-btn').addEventListener('click', () => {
+        trigger.dataset.value = '';
+        updateTriggerLabel();
+        renderPopup();
+      });
+    }
+
+    function open() {
+      const v = trigger.dataset.value;
+      if (v) { const d = parseISODate(v); displayed = { year: d.getFullYear(), month: d.getMonth() }; }
+      popup.hidden = false;
+      renderPopup();
+      setTimeout(() => document.addEventListener('click', onDocClick), 0);
+      document.addEventListener('keydown', onKey);
+    }
+    function close() {
+      popup.hidden = true;
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    }
+    function onDocClick(e) { if (!wrap.contains(e.target)) close(); }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      if (popup.hidden) open(); else close();
+    });
+
+    wrap.getValue = () => trigger.dataset.value || '';
+    wrap.setValue = (v) => {
+      trigger.dataset.value = v || '';
+      if (v) { const d = parseISODate(v); displayed = { year: d.getFullYear(), month: d.getMonth() }; }
+      updateTriggerLabel();
+    };
+
+    updateTriggerLabel();
+    return wrap;
+  }
+
   function setupExamForm() {
     const form = document.getElementById('exam-form');
+    const picker = createDatePicker('');
+    document.getElementById('exam-date-host').appendChild(picker);
     form.addEventListener('submit', e => {
       e.preventDefault();
-      const date = document.getElementById('exam-date').value;
+      const date = picker.getValue();
       const subject = document.getElementById('exam-subject').value.trim();
       if (!date || !subject) return;
       const exams = loadExams();
       exams.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 7), date, subject });
       saveExams(exams);
-      form.reset();
+      document.getElementById('exam-subject').value = '';
+      picker.setValue('');
       renderExamList();
       paintYearGrid();
       rebuildHsc();
@@ -1262,18 +1558,27 @@
   function buildCustomAssessEditRow(a) {
     const row = document.createElement('div');
     row.className = 'exam-row';
-    row.innerHTML = `
-      <input type="date" class="edit-date" value="${a.dateStr}" required>
-      <input type="text" class="edit-subject" placeholder="Subject" required>
-      <div class="actions">
-        <button class="btn ghost row-save">Save</button>
-        <button class="btn ghost row-cancel">Cancel</button>
-      </div>
+    const dateCell = document.createElement('div');
+    const picker = createDatePicker(a.dateStr);
+    dateCell.appendChild(picker);
+    row.appendChild(dateCell);
+    const subjectInput = document.createElement('input');
+    subjectInput.type = 'text';
+    subjectInput.className = 'edit-subject';
+    subjectInput.placeholder = 'Subject';
+    subjectInput.required = true;
+    subjectInput.value = a.name;
+    row.appendChild(subjectInput);
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+    actions.innerHTML = `
+      <button type="button" class="btn ghost row-save">Save</button>
+      <button type="button" class="btn ghost row-cancel">Cancel</button>
     `;
-    row.querySelector('.edit-subject').value = a.name;
-    row.querySelector('.row-save').addEventListener('click', () => {
-      const dateStr = row.querySelector('.edit-date').value;
-      const subject = row.querySelector('.edit-subject').value.trim();
+    row.appendChild(actions);
+    actions.querySelector('.row-save').addEventListener('click', () => {
+      const dateStr = picker.getValue();
+      const subject = subjectInput.value.trim();
       if (!dateStr || !subject) return;
       const updated = loadCustomAssessmentsRaw().map(e =>
         e.id === a.id ? { ...e, dateStr, label: subject, name: subject } : e
@@ -1282,7 +1587,7 @@
       renderCustomAssessList();
       rebuildAssessments();
     });
-    row.querySelector('.row-cancel').addEventListener('click', () => {
+    actions.querySelector('.row-cancel').addEventListener('click', () => {
       row.replaceWith(buildCustomAssessRow(a));
     });
     return row;
@@ -1290,16 +1595,19 @@
 
   function setupAssessForm() {
     const form = document.getElementById('assess-form');
+    const picker = createDatePicker('');
+    document.getElementById('assess-date-host').appendChild(picker);
     form.addEventListener('submit', e => {
       e.preventDefault();
-      const dateStr = document.getElementById('assess-date').value;
+      const dateStr = picker.getValue();
       const subject = document.getElementById('assess-subject').value.trim();
       if (!dateStr || !subject) return;
       const id = 'custom-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
       const list = loadCustomAssessmentsRaw();
       list.push({ id, label: subject, name: subject, dateStr });
       saveCustomAssessmentsRaw(list);
-      form.reset();
+      document.getElementById('assess-subject').value = '';
+      picker.setValue('');
       renderCustomAssessList();
       rebuildAssessments();
     });
