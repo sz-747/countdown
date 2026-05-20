@@ -513,7 +513,7 @@
 
   .exam-form {
     display: grid;
-    grid-template-columns: 1fr 1.5fr auto;
+    grid-template-columns: 1.3fr 0.8fr 1.5fr auto;
     gap: 0.75rem;
     align-items: stretch;
   }
@@ -570,13 +570,17 @@
 
   .exam-row {
     display: grid;
-    grid-template-columns: 130px 1fr auto;
+    grid-template-columns: minmax(180px, 1.2fr) minmax(0, 1.5fr) auto;
     gap: 1rem;
     align-items: center;
     padding: 0.8rem 1rem;
     border: 1px solid var(--line);
     border-radius: 6px;
     background: rgba(244, 241, 234, 0.02);
+  }
+  .exam-row.editing {
+    grid-template-columns: 1.3fr 0.8fr 1.5fr auto;
+    gap: 0.7rem;
   }
 
   .exam-row .date {
@@ -723,48 +727,128 @@
     font-weight: 600;
   }
 
-  .dp-time-row {
+  .tp { position: relative; display: flex; }
+
+  .tp-trigger {
+    flex: 1;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 0.5rem;
-    margin-top: 0.6rem;
-    padding-top: 0.6rem;
-    border-top: 1px solid var(--line);
-  }
-  .dp-time-row label {
-    font-size: 0.6rem;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .dp-time {
-    flex: 1;
     background: rgba(244, 241, 234, 0.05);
     border: 1px solid var(--line);
     color: var(--fg);
     font-family: 'Inter', sans-serif;
-    font-size: 0.85rem;
-    padding: 0.35rem 0.5rem;
-    border-radius: 4px;
-    color-scheme: dark;
+    font-size: 0.9rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s ease;
   }
-  .dp-time:focus { outline: none; border-color: var(--fg); }
-  .dp-time-clear {
+  .tp-trigger.tp-empty { color: var(--muted); }
+  .tp-trigger:hover { border-color: var(--fg); }
+  .tp-trigger:focus { outline: none; border-color: var(--accent-trials); }
+
+  .tp-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.7; }
+
+  .tp-popup {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 50;
+    width: 280px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  }
+  .tp-popup[hidden] { display: none; }
+
+  .tp-section { margin-bottom: 0.7rem; }
+
+  .tp-section-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.35rem;
+  }
+
+  .tp-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 3px;
+  }
+
+  .tp-cell {
+    background: rgba(244, 241, 234, 0.03);
+    border: 1px solid transparent;
+    color: var(--fg);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    border-radius: 4px;
+    padding: 0.4rem 0;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+  .tp-cell:hover { background: rgba(244, 241, 234, 0.12); }
+  .tp-cell.selected {
+    background: var(--fg);
+    color: var(--bg);
+    font-weight: 600;
+  }
+
+  .tp-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--line);
+  }
+  .tp-ampm {
+    display: flex;
+    gap: 3px;
+  }
+  .tp-ampm-btn {
+    background: rgba(244, 241, 234, 0.03);
+    border: 1px solid var(--line);
+    color: var(--muted);
+    border-radius: 4px;
+    padding: 0.35rem 0.9rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  .tp-ampm-btn:hover { color: var(--fg); border-color: var(--fg); }
+  .tp-ampm-btn.selected {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
+  }
+  .tp-clear-btn {
     background: transparent;
     border: 1px solid var(--line);
     color: var(--muted);
     border-radius: 4px;
-    width: 26px;
-    height: 26px;
+    padding: 0.35rem 0.75rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     cursor: pointer;
-    font-size: 0.85rem;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     transition: color 0.2s ease, border-color 0.2s ease;
   }
-  .dp-time-clear:hover { color: var(--fg); border-color: var(--fg); }
+  .tp-clear-btn:hover { color: var(--fg); border-color: var(--fg); }
+
+  .exam-row .tp { width: 100%; }
+  .exam-row .tp-trigger { padding: 0.45rem 0.6rem; font-size: 0.9rem; }
 
   .dp-footer {
     display: flex;
@@ -848,7 +932,8 @@
     .month-label { font-size: 0.6rem; letter-spacing: 0.1em; padding-right: 0.35rem; }
     .year-stats { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
     .exam-form { grid-template-columns: 1fr; }
-    .exam-row { grid-template-columns: 110px 1fr auto; gap: 0.6rem; padding: 0.7rem 0.8rem; }
+    .exam-row { grid-template-columns: 1fr; gap: 0.6rem; padding: 0.7rem 0.8rem; }
+    .exam-row.editing { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -961,6 +1046,7 @@
 
     <form class="exam-form" id="assess-form">
       <div id="assess-date-host"></div>
+      <div id="assess-time-host"></div>
       <input type="text" id="assess-subject" placeholder="Subject (e.g. Chemistry AT3)" required>
       <button type="submit" class="btn">Add</button>
     </form>
@@ -974,6 +1060,7 @@
 
     <form class="exam-form" id="exam-form">
       <div id="exam-date-host"></div>
+      <div id="exam-time-host"></div>
       <input type="text" id="exam-subject" placeholder="Subject (e.g. English Paper 1)" required>
       <button type="submit" class="btn">Add</button>
     </form>
@@ -1307,8 +1394,9 @@
   function buildExamRow(exam) {
     const row = document.createElement('div');
     row.className = 'exam-row';
+    const dateLabel = fmtExamDate(exam.date) + (exam.time ? ' · ' + fmtTimeStr(exam.time) : '');
     row.innerHTML = `
-      <span class="date">${fmtExamDate(exam.date)}</span>
+      <span class="date">${dateLabel}</span>
       <span class="subject"></span>
       <div class="actions">
         <button class="btn ghost row-edit">Edit</button>
@@ -1330,11 +1418,15 @@
 
   function buildExamEditRow(exam) {
     const row = document.createElement('div');
-    row.className = 'exam-row';
+    row.className = 'exam-row editing';
     const dateCell = document.createElement('div');
-    const picker = createDatePicker(exam.date, exam.time || '');
-    dateCell.appendChild(picker);
+    const datePicker = createDatePicker(exam.date);
+    dateCell.appendChild(datePicker);
     row.appendChild(dateCell);
+    const timeCell = document.createElement('div');
+    const timePicker = createTimePicker(exam.time || '');
+    timeCell.appendChild(timePicker);
+    row.appendChild(timeCell);
     const subjectInput = document.createElement('input');
     subjectInput.type = 'text';
     subjectInput.className = 'edit-subject';
@@ -1350,8 +1442,8 @@
     `;
     row.appendChild(actions);
     actions.querySelector('.row-save').addEventListener('click', () => {
-      const date = picker.getValue();
-      const time = picker.getTime();
+      const date = datePicker.getValue();
+      const time = timePicker.getValue();
       const subject = subjectInput.value.trim();
       if (!date || !subject) return;
       const updated = loadExams().map(e => e.id === exam.id ? { ...e, date, subject, time } : e);
@@ -1375,7 +1467,7 @@
     return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   }
 
-  function createDatePicker(initial = '', initialTime = '') {
+  function createDatePicker(initial = '') {
     const wrap = document.createElement('div');
     wrap.className = 'dp';
 
@@ -1383,7 +1475,6 @@
     trigger.type = 'button';
     trigger.className = 'dp-trigger';
     trigger.dataset.value = initial;
-    trigger.dataset.time = initialTime || '';
     trigger.innerHTML = `
       <span class="dp-trigger-text"></span>
       <svg class="dp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1409,18 +1500,10 @@
 
     function updateTriggerLabel() {
       const v = trigger.dataset.value;
-      const t = trigger.dataset.time;
       const text = trigger.querySelector('.dp-trigger-text');
       if (v) {
         const d = parseISODate(v);
-        let label = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-        if (t) {
-          const [hh, mm] = t.split(':').map(Number);
-          const td = new Date();
-          td.setHours(hh, mm, 0, 0);
-          label += ' · ' + td.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
-        }
-        text.textContent = label;
+        text.textContent = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
         trigger.classList.remove('dp-empty');
       } else {
         text.textContent = 'Pick a date';
@@ -1456,27 +1539,11 @@
         html += `<button type="button" class="${cls.join(' ')}" data-date="${ds}">${d}</button>`;
       }
       html += `</div>
-        <div class="dp-time-row">
-          <label>Time</label>
-          <input type="time" class="dp-time" value="${trigger.dataset.time || ''}">
-          <button type="button" class="dp-time-clear" title="Clear time" aria-label="Clear time">×</button>
-        </div>
         <div class="dp-footer">
           <button type="button" class="dp-today-btn">Today</button>
           <button type="button" class="dp-clear-btn">Clear</button>
         </div>`;
       popup.innerHTML = html;
-
-      popup.querySelector('.dp-time').addEventListener('input', e => {
-        trigger.dataset.time = e.target.value || '';
-        updateTriggerLabel();
-      });
-      popup.querySelector('.dp-time-clear').addEventListener('click', () => {
-        trigger.dataset.time = '';
-        const ti = popup.querySelector('.dp-time');
-        if (ti) ti.value = '';
-        updateTriggerLabel();
-      });
 
       popup.querySelectorAll('.dp-nav').forEach(b => {
         b.addEventListener('click', () => {
@@ -1502,7 +1569,6 @@
       });
       popup.querySelector('.dp-clear-btn').addEventListener('click', () => {
         trigger.dataset.value = '';
-        trigger.dataset.time = '';
         updateTriggerLabel();
         renderPopup();
       });
@@ -1530,14 +1596,164 @@
     });
 
     wrap.getValue = () => trigger.dataset.value || '';
-    wrap.getTime = () => trigger.dataset.time || '';
     wrap.setValue = (v) => {
       trigger.dataset.value = v || '';
       if (v) { const d = parseISODate(v); displayed = { year: d.getFullYear(), month: d.getMonth() }; }
       updateTriggerLabel();
     };
-    wrap.setTime = (t) => {
-      trigger.dataset.time = t || '';
+
+    updateTriggerLabel();
+    return wrap;
+  }
+
+  function createTimePicker(initial = '') {
+    const wrap = document.createElement('div');
+    wrap.className = 'tp';
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.className = 'tp-trigger';
+    trigger.dataset.value = initial || '';
+    trigger.innerHTML = `
+      <span class="tp-trigger-text"></span>
+      <svg class="tp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M12 7v5l3 2"></path>
+      </svg>
+    `;
+
+    const popup = document.createElement('div');
+    popup.className = 'tp-popup';
+    popup.hidden = true;
+    popup.addEventListener('click', e => e.stopPropagation());
+
+    wrap.appendChild(trigger);
+    wrap.appendChild(popup);
+
+    function parseTime(v) {
+      if (!v) return { hour12: 9, minute: 0, ampm: 'AM' };
+      const [hh, mm] = v.split(':').map(Number);
+      const ampm = hh < 12 ? 'AM' : 'PM';
+      let h12 = hh % 12;
+      if (h12 === 0) h12 = 12;
+      return { hour12: h12, minute: mm, ampm };
+    }
+    function to24(s) {
+      let h = s.hour12 % 12;
+      if (s.ampm === 'PM') h += 12;
+      return `${String(h).padStart(2, '0')}:${String(s.minute).padStart(2, '0')}`;
+    }
+    function fmt(v) {
+      const [hh, mm] = v.split(':').map(Number);
+      const d = new Date();
+      d.setHours(hh, mm, 0, 0);
+      return d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    let state = parseTime(initial);
+
+    function updateTriggerLabel() {
+      const v = trigger.dataset.value;
+      const text = trigger.querySelector('.tp-trigger-text');
+      if (v) {
+        text.textContent = fmt(v);
+        trigger.classList.remove('tp-empty');
+      } else {
+        text.textContent = 'Pick a time';
+        trigger.classList.add('tp-empty');
+      }
+    }
+
+    function renderPopup() {
+      const hours = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+      const minutes = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
+      const isSet = !!trigger.dataset.value;
+
+      let html = `
+        <div class="tp-section">
+          <div class="tp-section-label">Hour</div>
+          <div class="tp-grid">
+            ${hours.map(h => {
+              const sel = isSet && h === state.hour12 ? ' selected' : '';
+              return `<button type="button" class="tp-cell${sel}" data-hour="${h}">${h}</button>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="tp-section">
+          <div class="tp-section-label">Minute</div>
+          <div class="tp-grid">
+            ${minutes.map(m => {
+              const sel = isSet && m === state.minute ? ' selected' : '';
+              return `<button type="button" class="tp-cell${sel}" data-minute="${m}">:${String(m).padStart(2, '0')}</button>`;
+            }).join('')}
+          </div>
+        </div>
+        <div class="tp-footer">
+          <div class="tp-ampm">
+            <button type="button" class="tp-ampm-btn${isSet && state.ampm === 'AM' ? ' selected' : ''}" data-ampm="AM">AM</button>
+            <button type="button" class="tp-ampm-btn${isSet && state.ampm === 'PM' ? ' selected' : ''}" data-ampm="PM">PM</button>
+          </div>
+          <button type="button" class="tp-clear-btn">Clear</button>
+        </div>
+      `;
+      popup.innerHTML = html;
+
+      popup.querySelectorAll('[data-hour]').forEach(b => {
+        b.addEventListener('click', () => {
+          state.hour12 = parseInt(b.dataset.hour, 10);
+          commit();
+        });
+      });
+      popup.querySelectorAll('[data-minute]').forEach(b => {
+        b.addEventListener('click', () => {
+          state.minute = parseInt(b.dataset.minute, 10);
+          commit();
+        });
+      });
+      popup.querySelectorAll('[data-ampm]').forEach(b => {
+        b.addEventListener('click', () => {
+          state.ampm = b.dataset.ampm;
+          commit();
+        });
+      });
+      popup.querySelector('.tp-clear-btn').addEventListener('click', () => {
+        trigger.dataset.value = '';
+        state = parseTime('');
+        updateTriggerLabel();
+        renderPopup();
+      });
+    }
+
+    function commit() {
+      trigger.dataset.value = to24(state);
+      updateTriggerLabel();
+      renderPopup();
+    }
+
+    function open() {
+      state = parseTime(trigger.dataset.value);
+      popup.hidden = false;
+      renderPopup();
+      setTimeout(() => document.addEventListener('click', onDocClick), 0);
+      document.addEventListener('keydown', onKey);
+    }
+    function close() {
+      popup.hidden = true;
+      document.removeEventListener('click', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    }
+    function onDocClick(e) { if (!wrap.contains(e.target)) close(); }
+    function onKey(e) { if (e.key === 'Escape') close(); }
+
+    trigger.addEventListener('click', e => {
+      e.stopPropagation();
+      if (popup.hidden) open(); else close();
+    });
+
+    wrap.getValue = () => trigger.dataset.value || '';
+    wrap.setValue = (v) => {
+      trigger.dataset.value = v || '';
+      state = parseTime(v);
       updateTriggerLabel();
     };
 
@@ -1547,20 +1763,22 @@
 
   function setupExamForm() {
     const form = document.getElementById('exam-form');
-    const picker = createDatePicker('');
-    document.getElementById('exam-date-host').appendChild(picker);
+    const datePicker = createDatePicker('');
+    const timePicker = createTimePicker('');
+    document.getElementById('exam-date-host').appendChild(datePicker);
+    document.getElementById('exam-time-host').appendChild(timePicker);
     form.addEventListener('submit', e => {
       e.preventDefault();
-      const date = picker.getValue();
-      const time = picker.getTime();
+      const date = datePicker.getValue();
+      const time = timePicker.getValue();
       const subject = document.getElementById('exam-subject').value.trim();
       if (!date || !subject) return;
       const exams = loadExams();
       exams.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 7), date, subject, time });
       saveExams(exams);
       document.getElementById('exam-subject').value = '';
-      picker.setValue('');
-      picker.setTime('');
+      datePicker.setValue('');
+      timePicker.setValue('');
       renderExamList();
       paintYearGrid();
       rebuildHsc();
@@ -1630,11 +1848,20 @@
     list.forEach(a => root.appendChild(buildCustomAssessRow(a)));
   }
 
+  function fmtTimeStr(t) {
+    if (!t) return '';
+    const [hh, mm] = t.split(':').map(Number);
+    const d = new Date();
+    d.setHours(hh, mm, 0, 0);
+    return d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
+  }
+
   function buildCustomAssessRow(a) {
     const row = document.createElement('div');
     row.className = 'exam-row';
+    const dateLabel = fmtExamDate(a.dateStr) + (a.timeStr ? ' · ' + fmtTimeStr(a.timeStr) : '');
     row.innerHTML = `
-      <span class="date">${fmtExamDate(a.dateStr)}</span>
+      <span class="date">${dateLabel}</span>
       <span class="subject"></span>
       <div class="actions">
         <button class="btn ghost row-edit">Edit</button>
@@ -1655,11 +1882,15 @@
 
   function buildCustomAssessEditRow(a) {
     const row = document.createElement('div');
-    row.className = 'exam-row';
+    row.className = 'exam-row editing';
     const dateCell = document.createElement('div');
-    const picker = createDatePicker(a.dateStr, a.timeStr || '');
-    dateCell.appendChild(picker);
+    const datePicker = createDatePicker(a.dateStr);
+    dateCell.appendChild(datePicker);
     row.appendChild(dateCell);
+    const timeCell = document.createElement('div');
+    const timePicker = createTimePicker(a.timeStr || '');
+    timeCell.appendChild(timePicker);
+    row.appendChild(timeCell);
     const subjectInput = document.createElement('input');
     subjectInput.type = 'text';
     subjectInput.className = 'edit-subject';
@@ -1675,8 +1906,8 @@
     `;
     row.appendChild(actions);
     actions.querySelector('.row-save').addEventListener('click', () => {
-      const dateStr = picker.getValue();
-      const timeStr = picker.getTime();
+      const dateStr = datePicker.getValue();
+      const timeStr = timePicker.getValue();
       const subject = subjectInput.value.trim();
       if (!dateStr || !subject) return;
       const updated = loadCustomAssessmentsRaw().map(e =>
@@ -1694,12 +1925,14 @@
 
   function setupAssessForm() {
     const form = document.getElementById('assess-form');
-    const picker = createDatePicker('');
-    document.getElementById('assess-date-host').appendChild(picker);
+    const datePicker = createDatePicker('');
+    const timePicker = createTimePicker('');
+    document.getElementById('assess-date-host').appendChild(datePicker);
+    document.getElementById('assess-time-host').appendChild(timePicker);
     form.addEventListener('submit', e => {
       e.preventDefault();
-      const dateStr = picker.getValue();
-      const timeStr = picker.getTime();
+      const dateStr = datePicker.getValue();
+      const timeStr = timePicker.getValue();
       const subject = document.getElementById('assess-subject').value.trim();
       if (!dateStr || !subject) return;
       const id = 'custom-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
@@ -1707,8 +1940,8 @@
       list.push({ id, label: subject, name: subject, dateStr, timeStr });
       saveCustomAssessmentsRaw(list);
       document.getElementById('assess-subject').value = '';
-      picker.setValue('');
-      picker.setTime('');
+      datePicker.setValue('');
+      timePicker.setValue('');
       renderCustomAssessList();
       rebuildAssessments();
     });
