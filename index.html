@@ -590,6 +590,28 @@
     font-size: 0.95rem;
   }
 
+  .exam-row .actions {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .exam-row input {
+    background: rgba(244, 241, 234, 0.04);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    color: var(--fg);
+    padding: 0.45rem 0.6rem;
+    font-family: inherit;
+    font-size: 0.9rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .exam-row input:focus {
+    outline: none;
+    border-color: var(--fg);
+  }
+
   .exam-empty {
     padding: 2rem;
     text-align: center;
@@ -1098,23 +1120,59 @@
       return;
     }
     root.innerHTML = '';
-    list.forEach(exam => {
-      const row = document.createElement('div');
-      row.className = 'exam-row';
-      row.innerHTML = `
-        <span class="date">${fmtExamDate(exam.date)}</span>
-        <span class="subject"></span>
-        <button class="btn ghost" data-id="${exam.id}">Remove</button>
-      `;
-      row.querySelector('.subject').textContent = exam.subject;
-      row.querySelector('button').addEventListener('click', () => {
-        saveExams(loadExams().filter(e => e.id !== exam.id));
-        renderExamList();
-        paintYearGrid();
-        rebuildHsc();
-      });
-      root.appendChild(row);
+    list.forEach(exam => root.appendChild(buildExamRow(exam)));
+  }
+
+  function buildExamRow(exam) {
+    const row = document.createElement('div');
+    row.className = 'exam-row';
+    row.innerHTML = `
+      <span class="date">${fmtExamDate(exam.date)}</span>
+      <span class="subject"></span>
+      <div class="actions">
+        <button class="btn ghost row-edit">Edit</button>
+        <button class="btn ghost row-remove">Remove</button>
+      </div>
+    `;
+    row.querySelector('.subject').textContent = exam.subject;
+    row.querySelector('.row-edit').addEventListener('click', () => {
+      row.replaceWith(buildExamEditRow(exam));
     });
+    row.querySelector('.row-remove').addEventListener('click', () => {
+      saveExams(loadExams().filter(e => e.id !== exam.id));
+      renderExamList();
+      paintYearGrid();
+      rebuildHsc();
+    });
+    return row;
+  }
+
+  function buildExamEditRow(exam) {
+    const row = document.createElement('div');
+    row.className = 'exam-row';
+    row.innerHTML = `
+      <input type="date" class="edit-date" value="${exam.date}" required>
+      <input type="text" class="edit-subject" placeholder="Subject" required>
+      <div class="actions">
+        <button class="btn ghost row-save">Save</button>
+        <button class="btn ghost row-cancel">Cancel</button>
+      </div>
+    `;
+    row.querySelector('.edit-subject').value = exam.subject;
+    row.querySelector('.row-save').addEventListener('click', () => {
+      const date = row.querySelector('.edit-date').value;
+      const subject = row.querySelector('.edit-subject').value.trim();
+      if (!date || !subject) return;
+      const updated = loadExams().map(e => e.id === exam.id ? { ...e, date, subject } : e);
+      saveExams(updated);
+      renderExamList();
+      paintYearGrid();
+      rebuildHsc();
+    });
+    row.querySelector('.row-cancel').addEventListener('click', () => {
+      row.replaceWith(buildExamRow(exam));
+    });
+    return row;
   }
 
   function setupExamForm() {
@@ -1175,22 +1233,59 @@
       return;
     }
     root.innerHTML = '';
-    list.forEach(a => {
-      const row = document.createElement('div');
-      row.className = 'exam-row';
-      row.innerHTML = `
-        <span class="date">${fmtExamDate(a.dateStr)}</span>
-        <span class="subject"></span>
-        <button class="btn ghost" data-id="${a.id}">Remove</button>
-      `;
-      row.querySelector('.subject').textContent = a.name;
-      row.querySelector('button').addEventListener('click', () => {
-        saveCustomAssessmentsRaw(loadCustomAssessmentsRaw().filter(e => e.id !== a.id));
-        renderCustomAssessList();
-        rebuildAssessments();
-      });
-      root.appendChild(row);
+    list.forEach(a => root.appendChild(buildCustomAssessRow(a)));
+  }
+
+  function buildCustomAssessRow(a) {
+    const row = document.createElement('div');
+    row.className = 'exam-row';
+    row.innerHTML = `
+      <span class="date">${fmtExamDate(a.dateStr)}</span>
+      <span class="subject"></span>
+      <div class="actions">
+        <button class="btn ghost row-edit">Edit</button>
+        <button class="btn ghost row-remove">Remove</button>
+      </div>
+    `;
+    row.querySelector('.subject').textContent = a.name;
+    row.querySelector('.row-edit').addEventListener('click', () => {
+      row.replaceWith(buildCustomAssessEditRow(a));
     });
+    row.querySelector('.row-remove').addEventListener('click', () => {
+      saveCustomAssessmentsRaw(loadCustomAssessmentsRaw().filter(e => e.id !== a.id));
+      renderCustomAssessList();
+      rebuildAssessments();
+    });
+    return row;
+  }
+
+  function buildCustomAssessEditRow(a) {
+    const row = document.createElement('div');
+    row.className = 'exam-row';
+    row.innerHTML = `
+      <input type="date" class="edit-date" value="${a.dateStr}" required>
+      <input type="text" class="edit-subject" placeholder="Subject" required>
+      <div class="actions">
+        <button class="btn ghost row-save">Save</button>
+        <button class="btn ghost row-cancel">Cancel</button>
+      </div>
+    `;
+    row.querySelector('.edit-subject').value = a.name;
+    row.querySelector('.row-save').addEventListener('click', () => {
+      const dateStr = row.querySelector('.edit-date').value;
+      const subject = row.querySelector('.edit-subject').value.trim();
+      if (!dateStr || !subject) return;
+      const updated = loadCustomAssessmentsRaw().map(e =>
+        e.id === a.id ? { ...e, dateStr, label: subject, name: subject } : e
+      );
+      saveCustomAssessmentsRaw(updated);
+      renderCustomAssessList();
+      rebuildAssessments();
+    });
+    row.querySelector('.row-cancel').addEventListener('click', () => {
+      row.replaceWith(buildCustomAssessRow(a));
+    });
+    return row;
   }
 
   function setupAssessForm() {
