@@ -657,6 +657,7 @@
     <div class="tabs">
       <button class="tab active" data-view="countdown">Countdown</button>
       <button class="tab" data-view="assess">Assessments</button>
+      <button class="tab" data-view="hsc">HSC</button>
       <button class="tab" data-view="ua" hidden>UA</button>
       <button class="tab" data-view="year">Year</button>
       <button class="tab" data-view="settings">Settings</button>
@@ -726,6 +727,10 @@
 
   <section class="view assess-view" id="view-ua">
     <div class="assess-grid" id="ua-grid"></div>
+  </section>
+
+  <section class="view assess-view" id="view-hsc">
+    <div class="assess-grid" id="hsc-grid"></div>
   </section>
 
   <section class="view year-view" id="view-year">
@@ -855,6 +860,7 @@
 
     updateAssessments(allAssessments());
     updateAssessments(UA);
+    updateAssessments(hscAssessments());
     tick();
     if (document.getElementById('year-grid').children.length) paintYearGrid();
   }
@@ -897,6 +903,7 @@
     paintTicker('hsc-ticker',    breakdown(current, HSC));
     allAssessments().forEach(a => paintTicker('assess-ticker-' + a.id, simpleBreakdown(current, a.date)));
     UA.forEach(a => paintTicker('assess-ticker-' + a.id, simpleBreakdown(current, a.date)));
+    hscAssessments().forEach(a => paintTicker('assess-ticker-' + a.id, simpleBreakdown(current, a.date)));
   }
 
   function simpleBreakdown(from, to) {
@@ -1104,6 +1111,7 @@
         saveExams(loadExams().filter(e => e.id !== exam.id));
         renderExamList();
         paintYearGrid();
+        rebuildHsc();
       });
       root.appendChild(row);
     });
@@ -1122,6 +1130,7 @@
       form.reset();
       renderExamList();
       paintYearGrid();
+      rebuildHsc();
     });
   }
 
@@ -1143,8 +1152,18 @@
   function allAssessments() {
     return [...ASSESSMENTS, ...customAssessmentObjects()].sort((a, b) => a.date - b.date);
   }
+  function hscAssessments() {
+    return loadExams().map(e => {
+      const [y, m, d] = e.date.split('-').map(Number);
+      return { id: 'hsc-' + e.id, label: e.subject, name: e.subject, date: new Date(y, m - 1, d), noTime: true };
+    }).sort((a, b) => a.date - b.date);
+  }
   function rebuildAssessments() {
     buildAssessCards(allAssessments(), 'assess-grid');
+    update();
+  }
+  function rebuildHsc() {
+    buildAssessCards(hscAssessments(), 'hsc-grid');
     update();
   }
 
@@ -1234,6 +1253,7 @@
     renderExamList();
     setupAssessForm();
     renderCustomAssessList();
+    buildAssessCards(hscAssessments(), 'hsc-grid');
     await syncTime();
     update();
     paintYearGrid();
