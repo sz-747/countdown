@@ -748,6 +748,19 @@
 
   <section class="view settings-view" id="view-settings">
     <div>
+      <div class="settings-title">Assessment cards</div>
+      <div class="settings-desc">Add your own assessment dates. They'll appear as cards on the Assessments tab. Saved to this browser only.</div>
+    </div>
+
+    <form class="exam-form" id="assess-form">
+      <input type="date" id="assess-date" required>
+      <input type="text" id="assess-subject" placeholder="Subject (e.g. Chemistry AT3)" required>
+      <button type="submit" class="btn">Add</button>
+    </form>
+
+    <div class="exam-list" id="assess-list"></div>
+
+    <div>
       <div class="settings-title">Exam timetable</div>
       <div class="settings-desc">Add each HSC exam date and subject. They'll appear as markers on the Year grid. Saved to this browser only.</div>
     </div>
@@ -840,7 +853,7 @@
     setProgress('trials-bar', current, START, TRIALS);
     setProgress('hsc-bar',    current, START, HSC);
 
-    updateAssessments(ASSESSMENTS);
+    updateAssessments(allAssessments());
     updateAssessments(UA);
     tick();
     if (document.getElementById('year-grid').children.length) paintYearGrid();
@@ -882,7 +895,7 @@
     const current = now();
     paintTicker('trials-ticker', breakdown(current, TRIALS));
     paintTicker('hsc-ticker',    breakdown(current, HSC));
-    ASSESSMENTS.forEach(a => paintTicker('assess-ticker-' + a.id, simpleBreakdown(current, a.date)));
+    allAssessments().forEach(a => paintTicker('assess-ticker-' + a.id, simpleBreakdown(current, a.date)));
     UA.forEach(a => paintTicker('assess-ticker-' + a.id, simpleBreakdown(current, a.date)));
   }
 
@@ -1112,6 +1125,72 @@
     });
   }
 
+  const CUSTOM_ASSESS_KEY = 'countdown.customAssessments.v1';
+
+  function loadCustomAssessmentsRaw() {
+    try { return JSON.parse(localStorage.getItem(CUSTOM_ASSESS_KEY) || '[]'); }
+    catch (_) { return []; }
+  }
+  function saveCustomAssessmentsRaw(list) {
+    localStorage.setItem(CUSTOM_ASSESS_KEY, JSON.stringify(list));
+  }
+  function customAssessmentObjects() {
+    return loadCustomAssessmentsRaw().map(a => {
+      const [y, m, d] = a.dateStr.split('-').map(Number);
+      return { id: a.id, label: a.label, name: a.name, date: new Date(y, m - 1, d), noTime: true };
+    });
+  }
+  function allAssessments() {
+    return [...ASSESSMENTS, ...customAssessmentObjects()].sort((a, b) => a.date - b.date);
+  }
+  function rebuildAssessments() {
+    buildAssessCards(allAssessments(), 'assess-grid');
+    update();
+  }
+
+  function renderCustomAssessList() {
+    const list = loadCustomAssessmentsRaw().slice().sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+    const root = document.getElementById('assess-list');
+    if (!list.length) {
+      root.innerHTML = '<div class="exam-empty">No custom assessments added.</div>';
+      return;
+    }
+    root.innerHTML = '';
+    list.forEach(a => {
+      const row = document.createElement('div');
+      row.className = 'exam-row';
+      row.innerHTML = `
+        <span class="date">${fmtExamDate(a.dateStr)}</span>
+        <span class="subject"></span>
+        <button class="btn ghost" data-id="${a.id}">Remove</button>
+      `;
+      row.querySelector('.subject').textContent = a.name;
+      row.querySelector('button').addEventListener('click', () => {
+        saveCustomAssessmentsRaw(loadCustomAssessmentsRaw().filter(e => e.id !== a.id));
+        renderCustomAssessList();
+        rebuildAssessments();
+      });
+      root.appendChild(row);
+    });
+  }
+
+  function setupAssessForm() {
+    const form = document.getElementById('assess-form');
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const dateStr = document.getElementById('assess-date').value;
+      const subject = document.getElementById('assess-subject').value.trim();
+      if (!dateStr || !subject) return;
+      const id = 'custom-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      const list = loadCustomAssessmentsRaw();
+      list.push({ id, label: subject, name: subject, dateStr });
+      saveCustomAssessmentsRaw(list);
+      form.reset();
+      renderCustomAssessList();
+      rebuildAssessments();
+    });
+  }
+
   function setupTabs() {
     document.querySelectorAll('.tab').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -1147,12 +1226,14 @@
 
   (async () => {
     buildYearGrid();
-    buildAssessCards(ASSESSMENTS, 'assess-grid');
+    buildAssessCards(allAssessments(), 'assess-grid');
     buildAssessCards(UA, 'ua-grid');
     setupTabs();
     seedDefaultExams();
     setupExamForm();
     renderExamList();
+    setupAssessForm();
+    renderCustomAssessList();
     await syncTime();
     update();
     paintYearGrid();
