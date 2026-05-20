@@ -766,6 +766,48 @@
   }
   .tp-popup[hidden] { display: none; }
 
+  .tp-display {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding-bottom: 0.65rem;
+    margin-bottom: 0.7rem;
+    border-bottom: 1px solid var(--line);
+  }
+  .tp-display-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .tp-display-input {
+    width: 2.5rem;
+    background: rgba(244, 241, 234, 0.05);
+    border: 1px solid var(--line);
+    color: var(--fg);
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    font-variant-numeric: tabular-nums;
+    padding: 0.25rem 0.4rem;
+    border-radius: 4px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s ease;
+    -moz-appearance: textfield;
+  }
+  .tp-display-input::-webkit-outer-spin-button,
+  .tp-display-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .tp-display-input:focus { border-color: var(--fg); }
+  .tp-display-colon {
+    font-family: 'Fraunces', serif;
+    font-size: 1.4rem;
+    color: var(--muted);
+    line-height: 1;
+  }
+
   .tp-section { margin-bottom: 0.7rem; }
 
   .tp-section-label {
@@ -804,7 +846,7 @@
   .tp-footer {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: flex-end;
     gap: 0.5rem;
     padding-top: 0.6rem;
     border-top: 1px solid var(--line);
@@ -1668,11 +1710,24 @@
       const hours = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
       const minutes = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55];
       const isSet = !!trigger.dataset.value;
+      const hourVal = isSet ? state.hour12 : '';
+      const minuteVal = isSet ? String(state.minute).padStart(2, '0') : '';
 
-      let html = `
+      popup.innerHTML = `
+        <div class="tp-display">
+          <div class="tp-display-inputs">
+            <input type="text" class="tp-input-hour" inputmode="numeric" maxlength="2" placeholder="HH" value="${hourVal}" aria-label="Hour">
+            <span class="tp-display-colon">:</span>
+            <input type="text" class="tp-input-minute" inputmode="numeric" maxlength="2" placeholder="MM" value="${minuteVal}" aria-label="Minute">
+          </div>
+          <div class="tp-ampm">
+            <button type="button" class="tp-ampm-btn${isSet && state.ampm === 'AM' ? ' selected' : ''}" data-ampm="AM">AM</button>
+            <button type="button" class="tp-ampm-btn${isSet && state.ampm === 'PM' ? ' selected' : ''}" data-ampm="PM">PM</button>
+          </div>
+        </div>
         <div class="tp-section">
           <div class="tp-section-label">Hour</div>
-          <div class="tp-grid">
+          <div class="tp-grid tp-hours">
             ${hours.map(h => {
               const sel = isSet && h === state.hour12 ? ' selected' : '';
               return `<button type="button" class="tp-cell${sel}" data-hour="${h}">${h}</button>`;
@@ -1681,7 +1736,7 @@
         </div>
         <div class="tp-section">
           <div class="tp-section-label">Minute</div>
-          <div class="tp-grid">
+          <div class="tp-grid tp-minutes">
             ${minutes.map(m => {
               const sel = isSet && m === state.minute ? ' selected' : '';
               return `<button type="button" class="tp-cell${sel}" data-minute="${m}">:${String(m).padStart(2, '0')}</button>`;
@@ -1689,45 +1744,106 @@
           </div>
         </div>
         <div class="tp-footer">
-          <div class="tp-ampm">
-            <button type="button" class="tp-ampm-btn${isSet && state.ampm === 'AM' ? ' selected' : ''}" data-ampm="AM">AM</button>
-            <button type="button" class="tp-ampm-btn${isSet && state.ampm === 'PM' ? ' selected' : ''}" data-ampm="PM">PM</button>
-          </div>
           <button type="button" class="tp-clear-btn">Clear</button>
         </div>
       `;
-      popup.innerHTML = html;
 
       popup.querySelectorAll('[data-hour]').forEach(b => {
         b.addEventListener('click', () => {
           state.hour12 = parseInt(b.dataset.hour, 10);
-          commit();
+          applyState(true);
         });
       });
       popup.querySelectorAll('[data-minute]').forEach(b => {
         b.addEventListener('click', () => {
           state.minute = parseInt(b.dataset.minute, 10);
-          commit();
+          applyState(true);
         });
       });
       popup.querySelectorAll('[data-ampm]').forEach(b => {
         b.addEventListener('click', () => {
           state.ampm = b.dataset.ampm;
-          commit();
+          applyState(true);
         });
       });
       popup.querySelector('.tp-clear-btn').addEventListener('click', () => {
         trigger.dataset.value = '';
         state = parseTime('');
         updateTriggerLabel();
-        renderPopup();
+        const hi = popup.querySelector('.tp-input-hour');
+        const mi = popup.querySelector('.tp-input-minute');
+        if (hi) hi.value = '';
+        if (mi) mi.value = '';
+        popup.querySelectorAll('.tp-cell').forEach(c => c.classList.remove('selected'));
+        popup.querySelectorAll('.tp-ampm-btn').forEach(c => c.classList.remove('selected'));
+      });
+
+      const hi = popup.querySelector('.tp-input-hour');
+      const mi = popup.querySelector('.tp-input-minute');
+
+      hi.addEventListener('input', () => {
+        hi.value = hi.value.replace(/\D/g, '').slice(0, 2);
+        const h = parseInt(hi.value, 10);
+        if (!isNaN(h) && h >= 1 && h <= 12) {
+          state.hour12 = h;
+          applyState(false);
+        }
+      });
+      hi.addEventListener('blur', () => {
+        const h = parseInt(hi.value, 10);
+        if (isNaN(h) || h < 1 || h > 12) {
+          hi.value = trigger.dataset.value ? state.hour12 : '';
+        } else {
+          state.hour12 = h;
+          hi.value = h;
+          applyState(false);
+        }
+      });
+      hi.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); hi.blur(); }
+      });
+
+      mi.addEventListener('input', () => {
+        mi.value = mi.value.replace(/\D/g, '').slice(0, 2);
+        const m = parseInt(mi.value, 10);
+        if (!isNaN(m) && m >= 0 && m <= 59) {
+          state.minute = m;
+          applyState(false);
+        }
+      });
+      mi.addEventListener('blur', () => {
+        const m = parseInt(mi.value, 10);
+        if (isNaN(m) || m < 0 || m > 59) {
+          mi.value = trigger.dataset.value ? String(state.minute).padStart(2, '0') : '';
+        } else {
+          state.minute = m;
+          mi.value = String(m).padStart(2, '0');
+          applyState(false);
+        }
+      });
+      mi.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); mi.blur(); }
       });
     }
 
-    function commit() {
+    function applyState(updateInputs) {
       trigger.dataset.value = to24(state);
       updateTriggerLabel();
-      renderPopup();
+      popup.querySelectorAll('.tp-hours .tp-cell').forEach(b => {
+        b.classList.toggle('selected', parseInt(b.dataset.hour, 10) === state.hour12);
+      });
+      popup.querySelectorAll('.tp-minutes .tp-cell').forEach(b => {
+        b.classList.toggle('selected', parseInt(b.dataset.minute, 10) === state.minute);
+      });
+      popup.querySelectorAll('[data-ampm]').forEach(b => {
+        b.classList.toggle('selected', b.dataset.ampm === state.ampm);
+      });
+      if (updateInputs) {
+        const hi = popup.querySelector('.tp-input-hour');
+        const mi = popup.querySelector('.tp-input-minute');
+        if (hi) hi.value = state.hour12;
+        if (mi) mi.value = String(state.minute).padStart(2, '0');
+      }
     }
 
     function open() {
