@@ -956,7 +956,7 @@
   <section class="view settings-view" id="view-settings">
     <div>
       <div class="settings-title">Assessment cards</div>
-      <div class="settings-desc">Add your own assessment dates. They'll appear as cards on the Assessments tab. Saved to this browser only.</div>
+      <div class="settings-desc">Manage assessment dates shown on the Assessments tab. Edit or remove defaults, or add your own. Saved to this browser only.</div>
     </div>
 
     <form class="exam-form" id="assess-form">
@@ -992,15 +992,16 @@
   const HSC    = new Date(2026, 9, 13);  // 13 October 2026
   const START  = new Date(2026, 0, 28);  // notional Year 12 start for progress bar
 
-  const ASSESSMENTS = [
-    { id: 'eng-at3',      label: 'English Adv · AT3',   name: 'English Advanced AT3',    date: new Date(2026, 4, 22, 8, 30) },
-    { id: 'chem-at3',     label: 'Chem · AT3',          name: 'Chemistry AT3',           date: new Date(2026, 4, 26, 0, 0), noTime: true },
-    { id: 'legal-at3',    label: 'Legal · AT3',         name: 'Legal — Family Law AT3',  date: new Date(2026, 4, 29, 14, 20) },
-    { id: 'eng3-at2',     label: 'English Ext 1 · AT2', name: '3U English Portfolio AT2', date: new Date(2026, 5, 1, 7, 30) },
-    { id: 'math-adv',     label: 'Math Advanced',       name: 'Math Advanced',           date: new Date(2026, 5, 3, 8, 30), noTime: true },
-    { id: 'math-ext1',    label: 'Math Ext 1',          name: '3U Math',                 date: new Date(2026, 5, 15, 8, 30), noTime: true },
-    { id: 'software-at3', label: 'Software · AT3',      name: 'Software Project AT3',    date: new Date(2026, 5, 24, 8, 30), noTime: true },
+  const DEFAULT_ASSESSMENTS = [
+    { id: 'eng-at3',      label: 'English Adv · AT3',   name: 'English Advanced AT3',     dateStr: '2026-05-22', timeStr: '08:30' },
+    { id: 'chem-at3',     label: 'Chem · AT3',          name: 'Chemistry AT3',            dateStr: '2026-05-26', timeStr: '' },
+    { id: 'legal-at3',    label: 'Legal · AT3',         name: 'Legal — Family Law AT3',   dateStr: '2026-05-29', timeStr: '14:20' },
+    { id: 'eng3-at2',     label: 'English Ext 1 · AT2', name: '3U English Portfolio AT2', dateStr: '2026-06-01', timeStr: '07:30' },
+    { id: 'math-adv',     label: 'Math Advanced',       name: 'Math Advanced',            dateStr: '2026-06-03', timeStr: '' },
+    { id: 'math-ext1',    label: 'Math Ext 1',          name: '3U Math',                  dateStr: '2026-06-15', timeStr: '' },
+    { id: 'software-at3', label: 'Software · AT3',      name: 'Software Project AT3',     dateStr: '2026-06-24', timeStr: '' },
   ];
+  const ASSESSMENTS_SEED_KEY = 'countdown.assessments.seeded.v1';
 
   const UA = [
     { id: 'cloud-beta',    label: 'Cloud · Beta',        name: 'Cloud Beta Launch',      date: new Date(2026, 4, 23, 0, 0), noTime: true },
@@ -1125,7 +1126,7 @@
     return `${date} · ${time}`;
   }
 
-  function buildAssessCards(list = ASSESSMENTS, gridId = 'assess-grid') {
+  function buildAssessCards(list, gridId = 'assess-grid') {
     const grid = document.getElementById(gridId);
     grid.innerHTML = '';
     list.forEach(a => {
@@ -1153,7 +1154,7 @@
     });
   }
 
-  function updateAssessments(list = ASSESSMENTS) {
+  function updateAssessments(list) {
     const current = now();
     list.forEach(a => {
       const days = daysBetween(current, a.date);
@@ -1586,7 +1587,18 @@
     });
   }
   function allAssessments() {
-    return [...ASSESSMENTS, ...customAssessmentObjects()].sort((a, b) => a.date - b.date);
+    return customAssessmentObjects().sort((a, b) => a.date - b.date);
+  }
+
+  function seedDefaultAssessments() {
+    if (localStorage.getItem(ASSESSMENTS_SEED_KEY)) return;
+    const existing = loadCustomAssessmentsRaw();
+    const merged = [...existing];
+    DEFAULT_ASSESSMENTS.forEach(d => {
+      if (!merged.some(m => m.id === d.id)) merged.push(d);
+    });
+    saveCustomAssessmentsRaw(merged);
+    localStorage.setItem(ASSESSMENTS_SEED_KEY, '1');
   }
   function hscAssessments() {
     return loadExams().map(e => {
@@ -1737,6 +1749,7 @@
 
   (async () => {
     buildYearGrid();
+    seedDefaultAssessments();
     buildAssessCards(allAssessments(), 'assess-grid');
     buildAssessCards(UA, 'ua-grid');
     setupTabs();
