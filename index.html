@@ -1351,6 +1351,7 @@
     const popup = document.createElement('div');
     popup.className = 'dp-popup';
     popup.hidden = true;
+    popup.addEventListener('click', e => e.stopPropagation());
 
     wrap.appendChild(trigger);
     wrap.appendChild(popup);
