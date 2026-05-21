@@ -511,6 +511,122 @@
     line-height: 1.6;
   }
 
+  .settings-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.9rem 0;
+  }
+  .chips:empty { display: none; }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(244, 241, 234, 0.05);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0.35rem 0.4rem 0.35rem 0.85rem;
+    font-size: 0.8rem;
+    color: var(--fg);
+  }
+  .chip button {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+  .chip button:hover { color: var(--fg); background: rgba(244, 241, 234, 0.1); }
+
+  .chip-form {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .chip-form input {
+    flex: 1;
+    background: rgba(244, 241, 234, 0.05);
+    border: 1px solid var(--line);
+    color: var(--fg);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .chip-form input:focus { border-color: var(--accent-trials); }
+  .chip-form input::placeholder { color: var(--muted); }
+
+  .share-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.9rem;
+  }
+  .share-status {
+    font-size: 0.8rem;
+    color: var(--accent-assess);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .share-status.show { opacity: 1; }
+
+  .import-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    background: rgba(138, 180, 216, 0.08);
+    border: 1px solid rgba(138, 180, 216, 0.3);
+    border-radius: 8px;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+  .import-banner[hidden] { display: none; }
+  .import-text { font-size: 0.85rem; color: var(--fg); }
+  .import-actions { display: flex; gap: 0.5rem; }
+
+  .cal-btn {
+    align-self: flex-start;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 0;
+    margin-top: 0.1rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: color 0.2s ease;
+  }
+  .cal-btn::before {
+    content: '+';
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+  .cal-btn:hover { color: var(--fg); }
+
   .exam-form {
     display: grid;
     grid-template-columns: 1.3fr 0.8fr 1.5fr auto;
@@ -986,6 +1102,13 @@
 </head>
 <body>
 <div class="page">
+  <div class="import-banner" id="import-banner" hidden>
+    <span class="import-text" id="import-text">Someone shared a study setup with you.</span>
+    <div class="import-actions">
+      <button type="button" class="btn" id="import-accept">Import</button>
+      <button type="button" class="btn ghost" id="import-dismiss">Dismiss</button>
+    </div>
+  </div>
   <header>
     <div class="brand">Year 12 — the long road</div>
     <div class="tabs">
@@ -1087,32 +1210,59 @@
 
   <section class="view settings-view" id="view-settings">
     <div>
-      <div class="settings-title">Assessment cards</div>
+      <div class="settings-title">Your subjects</div>
+      <div class="settings-desc">Pick the subjects you take. They power suggestions when you add assessments and exams below. Saved to this browser only.</div>
+      <div class="chips" id="subject-chips"></div>
+      <form class="chip-form" id="subject-form">
+        <input type="text" id="subject-input" placeholder="Add a subject (e.g. Physics)" autocomplete="off">
+        <button type="submit" class="btn">Add</button>
+      </form>
+    </div>
+
+    <div>
+      <div class="settings-head">
+        <div class="settings-title">Assessment cards</div>
+        <button type="button" class="btn ghost" id="assess-export">Add all to calendar</button>
+      </div>
       <div class="settings-desc">Manage assessment dates shown on the Assessments tab. Edit or remove defaults, or add your own. Saved to this browser only.</div>
     </div>
 
     <form class="exam-form" id="assess-form">
       <div id="assess-date-host"></div>
       <div id="assess-time-host"></div>
-      <input type="text" id="assess-subject" placeholder="Subject (e.g. Chemistry AT3)" required>
+      <input type="text" id="assess-subject" list="subjects-list" placeholder="Subject (e.g. Chemistry AT3)" autocomplete="off" required>
       <button type="submit" class="btn">Add</button>
     </form>
 
     <div class="exam-list" id="assess-list"></div>
 
     <div>
-      <div class="settings-title">Exam timetable</div>
+      <div class="settings-head">
+        <div class="settings-title">Exam timetable</div>
+        <button type="button" class="btn ghost" id="exam-export">Add all to calendar</button>
+      </div>
       <div class="settings-desc">Add each HSC exam date and subject. They'll appear as markers on the Year grid. Saved to this browser only.</div>
     </div>
 
     <form class="exam-form" id="exam-form">
       <div id="exam-date-host"></div>
       <div id="exam-time-host"></div>
-      <input type="text" id="exam-subject" placeholder="Subject (e.g. English Paper 1)" required>
+      <input type="text" id="exam-subject" list="subjects-list" placeholder="Subject (e.g. English Paper 1)" autocomplete="off" required>
       <button type="submit" class="btn">Add</button>
     </form>
 
     <div class="exam-list" id="exam-list"></div>
+
+    <div>
+      <div class="settings-title">Share &amp; backup</div>
+      <div class="settings-desc">Copy a link that bundles your subjects, assessments and exams. Anyone who opens it can import your setup into their own browser.</div>
+      <div class="share-row">
+        <button type="button" class="btn" id="share-btn">Copy share link</button>
+        <span class="share-status" id="share-status"></span>
+      </div>
+    </div>
+
+    <datalist id="subjects-list"></datalist>
   </section>
 
   <footer>
@@ -1284,6 +1434,14 @@
       card.querySelector('.label span').textContent = a.label;
       card.querySelector('.name').textContent = a.name;
       card.querySelector('.meta').textContent = fmtAssessDate(a.date, a.noTime);
+      const calBtn = document.createElement('button');
+      calBtn.type = 'button';
+      calBtn.className = 'cal-btn';
+      calBtn.textContent = 'Add to calendar';
+      calBtn.addEventListener('click', () => {
+        downloadICS(slugify(a.name) + '.ics', buildICS([assessToEvent(a)]));
+      });
+      card.appendChild(calBtn);
       grid.appendChild(card);
     });
   }
@@ -1478,6 +1636,8 @@
     subjectInput.type = 'text';
     subjectInput.className = 'edit-subject';
     subjectInput.placeholder = 'Subject';
+    subjectInput.setAttribute('list', 'subjects-list');
+    subjectInput.autocomplete = 'off';
     subjectInput.required = true;
     subjectInput.value = exam.subject;
     row.appendChild(subjectInput);
@@ -2014,6 +2174,8 @@
     subjectInput.type = 'text';
     subjectInput.className = 'edit-subject';
     subjectInput.placeholder = 'Subject';
+    subjectInput.setAttribute('list', 'subjects-list');
+    subjectInput.autocomplete = 'off';
     subjectInput.required = true;
     subjectInput.value = a.name;
     row.appendChild(subjectInput);
@@ -2099,9 +2261,216 @@
     document.getElementById(barId).style.transform = `scaleX(${pct})`;
   }
 
+  // ---- Calendar (.ics) export ----
+  function pad2(n) { return String(n).padStart(2, '0'); }
+  function icsDate(d) { return `${d.getFullYear()}${pad2(d.getMonth() + 1)}${pad2(d.getDate())}`; }
+  function icsDateTime(d) { return `${icsDate(d)}T${pad2(d.getHours())}${pad2(d.getMinutes())}00`; }
+  function icsStampUTC() {
+    const d = new Date();
+    return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}T${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}${pad2(d.getUTCSeconds())}Z`;
+  }
+  function icsEscape(s) { return String(s).replace(/([\\;,])/g, '\\$1').replace(/\n/g, '\\n'); }
+  function slugify(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'event'; }
+
+  function assessToEvent(a) {
+    return { uid: a.id, title: a.name, date: a.date, allDay: !!a.noTime };
+  }
+
+  function buildICS(events) {
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Year 12 Countdown//EN', 'CALSCALE:GREGORIAN'];
+    const stamp = icsStampUTC();
+    events.forEach(ev => {
+      lines.push('BEGIN:VEVENT');
+      lines.push('UID:' + slugify(String(ev.uid)) + '-' + icsDate(ev.date) + '@year12-countdown');
+      lines.push('DTSTAMP:' + stamp);
+      if (ev.allDay) {
+        const end = new Date(ev.date); end.setDate(end.getDate() + 1);
+        lines.push('DTSTART;VALUE=DATE:' + icsDate(ev.date));
+        lines.push('DTEND;VALUE=DATE:' + icsDate(end));
+      } else {
+        const end = new Date(ev.date.getTime() + 3600000);
+        lines.push('DTSTART:' + icsDateTime(ev.date));
+        lines.push('DTEND:' + icsDateTime(end));
+      }
+      lines.push('SUMMARY:' + icsEscape(ev.title));
+      lines.push('END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    return lines.join('\r\n');
+  }
+
+  function downloadICS(filename, content) {
+    const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function setupExports() {
+    document.getElementById('assess-export').addEventListener('click', () => {
+      const list = allAssessments();
+      if (!list.length) return;
+      downloadICS('assessments.ics', buildICS(list.map(assessToEvent)));
+    });
+    document.getElementById('exam-export').addEventListener('click', () => {
+      const list = hscAssessments();
+      if (!list.length) return;
+      downloadICS('hsc-exams.ics', buildICS(list.map(assessToEvent)));
+    });
+  }
+
+  // ---- Subjects ----
+  const SUBJECTS_KEY = 'countdown.subjects.v1';
+  const SUBJECTS_SEED_KEY = 'countdown.subjects.seeded.v1';
+  const DEFAULT_SUBJECTS = [
+    'English Advanced', 'English Extension 1', 'Mathematics Advanced', 'Mathematics Extension 1',
+    'Chemistry', 'Legal Studies', 'Software Engineering',
+  ];
+
+  function loadSubjects() {
+    try { return JSON.parse(localStorage.getItem(SUBJECTS_KEY) || '[]'); }
+    catch (_) { return []; }
+  }
+  function saveSubjects(list) {
+    localStorage.setItem(SUBJECTS_KEY, JSON.stringify(list));
+  }
+  function seedDefaultSubjects() {
+    if (localStorage.getItem(SUBJECTS_SEED_KEY)) return;
+    if (!loadSubjects().length) saveSubjects(DEFAULT_SUBJECTS.slice());
+    localStorage.setItem(SUBJECTS_SEED_KEY, '1');
+  }
+  function renderSubjectDatalist() {
+    const dl = document.getElementById('subjects-list');
+    dl.innerHTML = loadSubjects().map(s => `<option value="${s.replace(/"/g, '&quot;')}"></option>`).join('');
+  }
+  function renderSubjectChips() {
+    const root = document.getElementById('subject-chips');
+    root.innerHTML = '';
+    loadSubjects().forEach(s => {
+      const chip = document.createElement('span');
+      chip.className = 'chip';
+      const txt = document.createElement('span');
+      txt.textContent = s;
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.textContent = '×';
+      rm.setAttribute('aria-label', 'Remove ' + s);
+      rm.addEventListener('click', () => {
+        saveSubjects(loadSubjects().filter(x => x !== s));
+        renderSubjectChips();
+        renderSubjectDatalist();
+      });
+      chip.appendChild(txt);
+      chip.appendChild(rm);
+      root.appendChild(chip);
+    });
+  }
+  function setupSubjectForm() {
+    const form = document.getElementById('subject-form');
+    const input = document.getElementById('subject-input');
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const v = input.value.trim();
+      if (!v) return;
+      const list = loadSubjects();
+      if (!list.some(x => x.toLowerCase() === v.toLowerCase())) {
+        list.push(v);
+        saveSubjects(list);
+        renderSubjectChips();
+        renderSubjectDatalist();
+      }
+      input.value = '';
+    });
+  }
+
+  // ---- Share & import ----
+  function encodeShare(obj) {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+  }
+  function decodeShare(str) {
+    return JSON.parse(decodeURIComponent(escape(atob(str))));
+  }
+  function buildSharePayload() {
+    return { v: 1, a: loadCustomAssessmentsRaw(), e: loadExams(), s: loadSubjects() };
+  }
+  function setupShare() {
+    const btn = document.getElementById('share-btn');
+    const status = document.getElementById('share-status');
+    btn.addEventListener('click', async () => {
+      const url = location.origin + location.pathname + '#data=' + encodeShare(buildSharePayload());
+      let ok = false;
+      try { await navigator.clipboard.writeText(url); ok = true; } catch (_) { ok = false; }
+      status.textContent = ok ? 'Link copied to clipboard' : 'Copy failed — check console';
+      if (!ok) console.log('Share link:', url);
+      status.classList.add('show');
+      setTimeout(() => status.classList.remove('show'), 2600);
+    });
+  }
+  function checkImport() {
+    const m = location.hash.match(/data=([^&]+)/);
+    if (!m) return;
+    let data;
+    try { data = decodeShare(m[1]); } catch (_) { return; }
+    if (!data || typeof data !== 'object') return;
+    const banner = document.getElementById('import-banner');
+    const text = document.getElementById('import-text');
+    const counts = [];
+    if (Array.isArray(data.a) && data.a.length) counts.push(data.a.length + ' assessment' + (data.a.length === 1 ? '' : 's'));
+    if (Array.isArray(data.e) && data.e.length) counts.push(data.e.length + ' exam' + (data.e.length === 1 ? '' : 's'));
+    if (Array.isArray(data.s) && data.s.length) counts.push(data.s.length + ' subject' + (data.s.length === 1 ? '' : 's'));
+    text.textContent = counts.length
+      ? `Someone shared ${counts.join(', ')} with you. Import into this browser?`
+      : 'Someone shared a study setup with you. Import into this browser?';
+    banner.hidden = false;
+
+    document.getElementById('import-accept').addEventListener('click', () => {
+      if (Array.isArray(data.a)) {
+        const cur = loadCustomAssessmentsRaw();
+        data.a.forEach(inc => {
+          const i = cur.findIndex(x => x.id === inc.id);
+          if (i >= 0) cur[i] = inc; else cur.push(inc);
+        });
+        saveCustomAssessmentsRaw(cur);
+      }
+      if (Array.isArray(data.e)) {
+        const cur = loadExams();
+        data.e.forEach(inc => {
+          const i = cur.findIndex(x => x.id === inc.id);
+          if (i >= 0) cur[i] = inc; else cur.push(inc);
+        });
+        saveExams(cur);
+      }
+      if (Array.isArray(data.s)) {
+        const cur = loadSubjects();
+        data.s.forEach(s => { if (!cur.some(x => x.toLowerCase() === String(s).toLowerCase())) cur.push(s); });
+        saveSubjects(cur);
+      }
+      history.replaceState(null, '', location.pathname);
+      banner.hidden = true;
+      renderSubjectChips();
+      renderSubjectDatalist();
+      renderCustomAssessList();
+      renderExamList();
+      rebuildAssessments();
+      rebuildHsc();
+      paintYearGrid();
+    }, { once: true });
+
+    document.getElementById('import-dismiss').addEventListener('click', () => {
+      history.replaceState(null, '', location.pathname);
+      banner.hidden = true;
+    }, { once: true });
+  }
+
   (async () => {
     buildYearGrid();
     seedDefaultAssessments();
+    seedDefaultSubjects();
     buildAssessCards(allAssessments(), 'assess-grid');
     buildAssessCards(UA, 'ua-grid');
     setupTabs();
@@ -2111,6 +2480,12 @@
     setupAssessForm();
     renderCustomAssessList();
     buildAssessCards(hscAssessments(), 'hsc-grid');
+    renderSubjectChips();
+    renderSubjectDatalist();
+    setupSubjectForm();
+    setupExports();
+    setupShare();
+    checkImport();
     await syncTime();
     update();
     paintYearGrid();
