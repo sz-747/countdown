@@ -266,7 +266,6 @@
   .year-view {
     padding: 2rem 0;
     flex: 1;
-    display: flex;
     flex-direction: column;
     gap: 1.5rem;
   }
@@ -478,7 +477,6 @@
   .settings-view {
     padding: 2rem 0;
     flex: 1;
-    display: flex;
     flex-direction: column;
     gap: 2rem;
     max-width: 720px;
