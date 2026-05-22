@@ -1,0 +1,264 @@
+// Assessment cards (Assessments / UA / HSC tabs) + custom assessment CRUD,
+// plus the generic card renderer shared with categories.
+
+import { daysBetween, fmtAssessDate, urgencyColor, fmtExamDate, fmtTimeStr } from './utils.js';
+import { now } from './time.js';
+import { slugify, assessToEvent, buildICS, downloadICS } from './ics.js';
+import { createDatePicker, createTimePicker } from './pickers.js';
+import { loadExams } from './exams.js';
+import { buildCategoryEditCard, removeCard } from './categories.js';
+import { update } from './refresh.js';
+
+const DEFAULT_ASSESSMENTS = [
+  { id: 'eng-at3',      label: 'English Adv · AT3',   name: 'English Advanced AT3',     dateStr: '2026-05-22', timeStr: '08:30' },
+  { id: 'chem-at3',     label: 'Chem · AT3',          name: 'Chemistry AT3',            dateStr: '2026-05-26', timeStr: '' },
+  { id: 'legal-at3',    label: 'Legal · AT3',         name: 'Legal — Family Law AT3',   dateStr: '2026-05-29', timeStr: '14:20' },
+  { id: 'eng3-at2',     label: 'English Ext 1 · AT2', name: '3U English Portfolio AT2', dateStr: '2026-06-01', timeStr: '07:30' },
+  { id: 'math-adv',     label: 'Math Advanced',       name: 'Math Advanced',            dateStr: '2026-06-03', timeStr: '' },
+  { id: 'math-ext1',    label: 'Math Ext 1',          name: '3U Math',                  dateStr: '2026-06-15', timeStr: '' },
+  { id: 'software-at3', label: 'Software · AT3',      name: 'Software Project AT3',     dateStr: '2026-06-24', timeStr: '' },
+];
+const ASSESSMENTS_SEED_KEY = 'countdown.assessments.seeded.v1';
+
+export const UA = [
+  { id: 'cloud-beta',    label: 'Cloud · Beta',        name: 'Cloud Beta Launch',      date: new Date(2026, 4, 23, 0, 0), noTime: true },
+  { id: 'first-client',  label: 'Client · Onboard',    name: 'First client onboard',   date: new Date(2026, 4, 24, 0, 0), noTime: true },
+  { id: 'codex-end',     label: 'Codex · End',         name: 'Codex end',              date: new Date(2026, 4, 29, 0, 0), noTime: true },
+  { id: 'claude-20x',    label: 'Claude 20x · End',    name: 'Claude 20x end',         date: new Date(2026, 5, 4, 0, 0), noTime: true },
+  { id: 'v2-ship',       label: 'V2 · Ship',           name: 'V2 ship',                date: new Date(2026, 5, 6, 0, 0), noTime: true },
+];
+
+const CUSTOM_ASSESS_KEY = 'countdown.customAssessments.v1';
+
+export function buildAssessCards(list, gridId = 'assess-grid', opts = {}) {
+  const grid = document.getElementById(gridId);
+  grid.innerHTML = '';
+  list.forEach(a => {
+    const card = document.createElement('section');
+    card.className = 'card assess-card';
+    card.innerHTML = `
+      <div class="label"><span></span></div>
+      <div class="name"></div>
+      <div class="display">
+        <div class="number" id="assess-num-${a.id}">—</div>
+        <div class="unit" id="assess-unit-${a.id}">days</div>
+      </div>
+      <div class="meta"></div>
+      <div class="ticker" id="assess-ticker-${a.id}">
+        <div class="cell"><span class="v" data-u="days">—</span><span class="k">Days</span></div>
+        <div class="cell"><span class="v" data-u="hours">—</span><span class="k">Hours</span></div>
+        <div class="cell"><span class="v" data-u="minutes">—</span><span class="k">Mins</span></div>
+        <div class="cell"><span class="v live" data-u="seconds">—</span><span class="k">Secs</span></div>
+      </div>
+    `;
+    card.querySelector('.label span').textContent = a.label;
+    card.querySelector('.name').textContent = a.name;
+    card.querySelector('.meta').textContent = fmtAssessDate(a.date, a.noTime);
+    const calBtn = document.createElement('button');
+    calBtn.type = 'button';
+    calBtn.className = 'cal-btn';
+    calBtn.textContent = 'Add to calendar';
+    calBtn.addEventListener('click', () => {
+      downloadICS(slugify(a.name) + '.ics', buildICS([assessToEvent(a)]));
+    });
+    card.appendChild(calBtn);
+    if (opts.withActions) {
+      const actions = document.createElement('div');
+      actions.className = 'card-actions';
+      actions.innerHTML = `
+        <button type="button" class="btn ghost card-edit">Edit</button>
+        <button type="button" class="btn ghost card-remove">Remove</button>
+      `;
+      actions.querySelector('.card-edit').addEventListener('click', () => {
+        card.replaceWith(buildCategoryEditCard(a._catId, a._cardId, gridId));
+      });
+      actions.querySelector('.card-remove').addEventListener('click', () => {
+        removeCard(a._catId, a._cardId);
+      });
+      card.appendChild(actions);
+    }
+    grid.appendChild(card);
+  });
+}
+
+export function updateAssessments(list) {
+  const current = now();
+  list.forEach(a => {
+    const days = daysBetween(current, a.date);
+    const numEl = document.getElementById('assess-num-' + a.id);
+    const unitEl = document.getElementById('assess-unit-' + a.id);
+    if (!numEl || !unitEl) return;
+    if (days > 0) { numEl.textContent = days; unitEl.textContent = days === 1 ? 'day' : 'days'; }
+    else if (days === 0) { numEl.textContent = '0'; unitEl.textContent = 'today'; }
+    else { numEl.textContent = Math.abs(days); unitEl.textContent = 'days ago'; }
+
+    numEl.closest('.assess-card').style.setProperty('--card-accent', urgencyColor(days));
+  });
+}
+
+export function loadCustomAssessmentsRaw() {
+  try { return JSON.parse(localStorage.getItem(CUSTOM_ASSESS_KEY) || '[]'); }
+  catch (_) { return []; }
+}
+export function saveCustomAssessmentsRaw(list) {
+  localStorage.setItem(CUSTOM_ASSESS_KEY, JSON.stringify(list));
+}
+function customAssessmentObjects() {
+  return loadCustomAssessmentsRaw().map(a => {
+    const [y, m, d] = a.dateStr.split('-').map(Number);
+    if (a.timeStr) {
+      const [hh, mm] = a.timeStr.split(':').map(Number);
+      return { id: a.id, label: a.label, name: a.name, date: new Date(y, m - 1, d, hh, mm), noTime: false };
+    }
+    return { id: a.id, label: a.label, name: a.name, date: new Date(y, m - 1, d), noTime: true };
+  });
+}
+export function allAssessments() {
+  return customAssessmentObjects().sort((a, b) => a.date - b.date);
+}
+
+export function seedDefaultAssessments() {
+  if (localStorage.getItem(ASSESSMENTS_SEED_KEY)) return;
+  const existing = loadCustomAssessmentsRaw();
+  const merged = [...existing];
+  DEFAULT_ASSESSMENTS.forEach(d => {
+    if (!merged.some(m => m.id === d.id)) merged.push(d);
+  });
+  saveCustomAssessmentsRaw(merged);
+  localStorage.setItem(ASSESSMENTS_SEED_KEY, '1');
+}
+export function hscAssessments() {
+  return loadExams().map(e => {
+    const [y, m, d] = e.date.split('-').map(Number);
+    if (e.time) {
+      const [hh, mm] = e.time.split(':').map(Number);
+      return { id: 'hsc-' + e.id, label: e.subject, name: e.subject, date: new Date(y, m - 1, d, hh, mm), noTime: false };
+    }
+    return { id: 'hsc-' + e.id, label: e.subject, name: e.subject, date: new Date(y, m - 1, d), noTime: true };
+  }).sort((a, b) => a.date - b.date);
+}
+export function rebuildAssessments() {
+  buildAssessCards(allAssessments(), 'assess-grid');
+  update();
+}
+export function rebuildHsc() {
+  buildAssessCards(hscAssessments(), 'hsc-grid');
+  update();
+}
+
+export function renderCustomAssessList() {
+  const list = loadCustomAssessmentsRaw().slice().sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+  const root = document.getElementById('assess-list');
+  if (!list.length) {
+    root.innerHTML = '<div class="exam-empty">No custom assessments added.</div>';
+    return;
+  }
+  root.innerHTML = '';
+  list.forEach(a => root.appendChild(buildCustomAssessRow(a)));
+}
+
+function buildCustomAssessRow(a) {
+  const row = document.createElement('div');
+  row.className = 'exam-row';
+  const dateLabel = fmtExamDate(a.dateStr) + (a.timeStr ? ' · ' + fmtTimeStr(a.timeStr) : '');
+  row.innerHTML = `
+    <span class="date">${dateLabel}</span>
+    <span class="subject"></span>
+    <div class="actions">
+      <button class="btn ghost row-edit">Edit</button>
+      <button class="btn ghost row-remove">Remove</button>
+    </div>
+  `;
+  row.querySelector('.subject').textContent = a.name;
+  row.querySelector('.row-edit').addEventListener('click', () => {
+    row.replaceWith(buildCustomAssessEditRow(a));
+  });
+  row.querySelector('.row-remove').addEventListener('click', () => {
+    saveCustomAssessmentsRaw(loadCustomAssessmentsRaw().filter(e => e.id !== a.id));
+    renderCustomAssessList();
+    rebuildAssessments();
+  });
+  return row;
+}
+
+function buildCustomAssessEditRow(a) {
+  const row = document.createElement('div');
+  row.className = 'exam-row editing';
+  const dateCell = document.createElement('div');
+  const datePicker = createDatePicker(a.dateStr);
+  dateCell.appendChild(datePicker);
+  row.appendChild(dateCell);
+  const timeCell = document.createElement('div');
+  const timePicker = createTimePicker(a.timeStr || '');
+  timeCell.appendChild(timePicker);
+  row.appendChild(timeCell);
+  const subjectInput = document.createElement('input');
+  subjectInput.type = 'text';
+  subjectInput.className = 'edit-subject';
+  subjectInput.placeholder = 'Subject';
+  subjectInput.setAttribute('list', 'subjects-list');
+  subjectInput.autocomplete = 'off';
+  subjectInput.required = true;
+  subjectInput.value = a.name;
+  row.appendChild(subjectInput);
+  const actions = document.createElement('div');
+  actions.className = 'actions';
+  actions.innerHTML = `
+    <button type="button" class="btn ghost row-save">Save</button>
+    <button type="button" class="btn ghost row-cancel">Cancel</button>
+  `;
+  row.appendChild(actions);
+  actions.querySelector('.row-save').addEventListener('click', () => {
+    const dateStr = datePicker.getValue();
+    const timeStr = timePicker.getValue();
+    const subject = subjectInput.value.trim();
+    if (!dateStr || !subject) return;
+    const updated = loadCustomAssessmentsRaw().map(e =>
+      e.id === a.id ? { ...e, dateStr, timeStr, label: subject, name: subject } : e
+    );
+    saveCustomAssessmentsRaw(updated);
+    renderCustomAssessList();
+    rebuildAssessments();
+  });
+  actions.querySelector('.row-cancel').addEventListener('click', () => {
+    row.replaceWith(buildCustomAssessRow(a));
+  });
+  return row;
+}
+
+export function setupAssessForm() {
+  const form = document.getElementById('assess-form');
+  const datePicker = createDatePicker('');
+  const timePicker = createTimePicker('');
+  document.getElementById('assess-date-host').appendChild(datePicker);
+  document.getElementById('assess-time-host').appendChild(timePicker);
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const dateStr = datePicker.getValue();
+    const timeStr = timePicker.getValue();
+    const subject = document.getElementById('assess-subject').value.trim();
+    if (!dateStr || !subject) return;
+    const id = 'custom-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    const list = loadCustomAssessmentsRaw();
+    list.push({ id, label: subject, name: subject, dateStr, timeStr });
+    saveCustomAssessmentsRaw(list);
+    document.getElementById('assess-subject').value = '';
+    datePicker.setValue('');
+    timePicker.setValue('');
+    renderCustomAssessList();
+    rebuildAssessments();
+  });
+}
+
+export function setupExports() {
+  document.getElementById('assess-export').addEventListener('click', () => {
+    const list = allAssessments();
+    if (!list.length) return;
+    downloadICS('assessments.ics', buildICS(list.map(assessToEvent)));
+  });
+  document.getElementById('exam-export').addEventListener('click', () => {
+    const list = hscAssessments();
+    if (!list.length) return;
+    downloadICS('hsc-exams.ics', buildICS(list.map(assessToEvent)));
+  });
+}
