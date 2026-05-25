@@ -8,6 +8,7 @@ import { createDatePicker, createTimePicker } from './pickers.js';
 import { loadExams } from './exams.js';
 import { buildCategoryEditCard, removeCard } from './categories.js';
 import { update } from './refresh.js';
+import { breakdown } from './countdown.js';
 
 const DEFAULT_ASSESSMENTS = [
   { id: 'eng-at3',      label: 'English Adv · AT3',   name: 'English Advanced AT3',     dateStr: '2026-05-22', timeStr: '08:30' },
@@ -54,14 +55,16 @@ export function buildAssessCards(list, gridId = 'assess-grid', opts = {}) {
     card.querySelector('.label span').textContent = a.label;
     card.querySelector('.name').textContent = a.name;
     card.querySelector('.meta').textContent = fmtAssessDate(a.date, a.noTime);
-    const calBtn = document.createElement('button');
-    calBtn.type = 'button';
-    calBtn.className = 'cal-btn';
-    calBtn.textContent = 'Add to calendar';
-    calBtn.addEventListener('click', () => {
-      downloadICS(slugify(a.name) + '.ics', buildICS([assessToEvent(a)]));
-    });
-    card.appendChild(calBtn);
+    if (!opts.noCalendar) {
+      const calBtn = document.createElement('button');
+      calBtn.type = 'button';
+      calBtn.className = 'cal-btn';
+      calBtn.textContent = 'Add to calendar';
+      calBtn.addEventListener('click', () => {
+        downloadICS(slugify(a.name) + '.ics', buildICS([assessToEvent(a)]));
+      });
+      card.appendChild(calBtn);
+    }
     if (opts.withActions) {
       const actions = document.createElement('div');
       actions.className = 'card-actions';
@@ -88,7 +91,19 @@ export function updateAssessments(list) {
     const numEl = document.getElementById('assess-num-' + a.id);
     const unitEl = document.getElementById('assess-unit-' + a.id);
     if (!numEl || !unitEl) return;
-    if (days > 0) { numEl.textContent = days; unitEl.textContent = days === 1 ? 'day' : 'days'; }
+    if (days > 0) {
+      const b = breakdown(current, a.date);
+      if (b.months >= 1) {
+        // Far out: read as "2 months 1 week" instead of a big raw day count.
+        numEl.textContent = b.months;
+        let unit = b.months === 1 ? 'month' : 'months';
+        if (b.weeks > 0) unit += ` ${b.weeks} week${b.weeks === 1 ? '' : 's'}`;
+        unitEl.textContent = unit;
+      } else {
+        numEl.textContent = days;
+        unitEl.textContent = days === 1 ? 'day' : 'days';
+      }
+    }
     else if (days === 0) { numEl.textContent = '0'; unitEl.textContent = 'today'; }
     else { numEl.textContent = Math.abs(days); unitEl.textContent = 'days ago'; }
 

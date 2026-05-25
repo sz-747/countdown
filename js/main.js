@@ -3,8 +3,9 @@
 import { now, syncTime } from './time.js';
 import { update, tick } from './refresh.js';
 import { buildYearGrid, paintYearGrid } from './yeargrid.js';
-import { setupTabs } from './tabs.js';
+import { setupTabs, applyTabOrder } from './tabs.js';
 import { initCategories } from './categories.js';
+import { setupPersonalize } from './personalize.js';
 import { seedDefaultExams, setupExamForm, renderExamList } from './exams.js';
 import {
   seedDefaultAssessments, allAssessments, UA, buildAssessCards, hscAssessments,
@@ -23,6 +24,7 @@ import { setupShare, checkImport } from './share.js';
   buildAssessCards(UA, 'ua-grid');
   setupTabs();
   initCategories();
+  applyTabOrder();
   seedDefaultExams();
   setupExamForm();
   renderExamList();
@@ -33,6 +35,7 @@ import { setupShare, checkImport } from './share.js';
   renderSubjectDatalist();
   setupSubjectForm();
   setupExports();
+  setupPersonalize();
   setupShare();
   checkImport();
   await syncTime();

@@ -25,12 +25,12 @@
   <header>
     <div class="brand">Year 12 — the long road</div>
     <div class="tabs">
-      <button class="tab active" data-view="countdown">Countdown</button>
-      <button class="tab" data-view="assess">Assessments</button>
-      <button class="tab" data-view="hsc">HSC</button>
-      <button class="tab" data-view="ua" hidden>UA</button>
-      <button class="tab" data-view="year">Year</button>
-      <button class="tab" data-view="settings">Settings</button>
+      <button class="tab active" data-view="countdown" draggable="true">Countdown</button>
+      <button class="tab" data-view="assess" draggable="true">Assessments</button>
+      <button class="tab" data-view="hsc" draggable="true">HSC</button>
+      <button class="tab" data-view="ua" draggable="true" hidden>UA</button>
+      <button class="tab" data-view="year" draggable="true">Year</button>
+      <button class="tab" data-view="settings" draggable="true">Settings</button>
     </div>
     <div class="header-right">
       <div class="today" id="today">—</div>
@@ -122,6 +122,19 @@
   </section>
 
   <section class="view settings-view" id="view-settings">
+    <div class="personalize">
+      <div class="settings-title">Make it yours</div>
+      <div class="settings-desc">Pick a colour theme and make the words yours — saved to this browser only.</div>
+      <div class="personalize-row personalize-row--theme">
+        <label class="personalize-label">Theme</label>
+        <div class="theme-grid" id="theme-grid"></div>
+      </div>
+      <div class="personalize-row">
+        <label class="personalize-label" for="title-input">Header title</label>
+        <input type="text" id="title-input" class="personalize-input" maxlength="60" autocomplete="off">
+      </div>
+    </div>
+
     <div>
       <div class="settings-title">Your subjects</div>
       <div class="settings-desc">Pick the subjects you take. They power suggestions when you add assessments and exams below. Saved to this browser only.</div>

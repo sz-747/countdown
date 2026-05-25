@@ -7,6 +7,11 @@ import { update } from './refresh.js';
 
 const CATEGORIES_KEY = 'countdown.categories.v1';
 
+// Which category views are currently in "editing" mode (add-form + per-card
+// actions visible). A fresh/empty category starts editing; once saved it shows
+// a clean grid until the user reopens it via the bottom "Edit countdowns" button.
+const editingCats = new Set();
+
 export function loadCategories() {
   try {
     const arr = JSON.parse(localStorage.getItem(CATEGORIES_KEY) || '[]');
@@ -42,11 +47,29 @@ function populateCategoryGrid(cat) {
   const gridId = 'cat-grid-' + cat.id;
   const grid = document.getElementById(gridId);
   if (!grid) return;
+  const editing = editingCats.has(cat.id);
   if (!cat.cards.length) {
-    grid.innerHTML = '<div class="exam-empty">No countdowns yet. Add one above.</div>';
+    grid.innerHTML = editing
+      ? '<div class="exam-empty">No countdowns yet. Add one above.</div>'
+      : '<div class="exam-empty">No countdowns yet.</div>';
     return;
   }
-  buildAssessCards(categoryCardObjects(cat), gridId, { withActions: true });
+  buildAssessCards(categoryCardObjects(cat), gridId, { withActions: editing, noCalendar: true });
+}
+
+// Flip a category view between editing (form + per-card actions) and the clean
+// saved view, then repaint its grid so the per-card actions follow suit.
+function setCategoryEditing(catId, editing) {
+  if (editing) editingCats.add(catId);
+  else editingCats.delete(catId);
+  const view = document.getElementById('view-cat-' + catId);
+  if (view) {
+    view.classList.toggle('editing', editing);
+    view.classList.toggle('saved', !editing);
+  }
+  const cat = loadCategories().find(c => c.id === catId);
+  if (cat) populateCategoryGrid(cat);
+  update(); // repaint the freshly-built cards' day counts
 }
 
 function rebuildCategory(catId) {
@@ -123,13 +146,15 @@ export function buildCategoryEditCard(catId, cardId, gridId) {
 }
 
 function buildCategoryView(cat) {
+  const editing = editingCats.has(cat.id);
   const section = document.createElement('section');
-  section.className = 'view assess-view';
+  section.className = 'view assess-view cat-view ' + (editing ? 'editing' : 'saved');
   section.id = 'view-cat-' + cat.id;
   section.innerHTML = `
     <div class="cat-head">
       <div class="cat-title"></div>
       <div class="cat-head-actions">
+        <button type="button" class="btn cat-save">Save</button>
         <button type="button" class="btn ghost cat-rename">Rename</button>
         <button type="button" class="btn ghost cat-delete">Delete</button>
       </div>
@@ -141,6 +166,9 @@ function buildCategoryView(cat) {
       <button type="submit" class="btn">Add</button>
     </form>
     <div class="assess-grid" id="cat-grid-${cat.id}"></div>
+    <div class="cat-foot">
+      <button type="button" class="btn ghost cat-edit-toggle">Edit countdowns</button>
+    </div>
   `;
   section.querySelector('.cat-title').textContent = cat.name;
 
@@ -161,6 +189,8 @@ function buildCategoryView(cat) {
     dp.setValue('');
     tp.setValue('');
   });
+  section.querySelector('.cat-save').addEventListener('click', () => setCategoryEditing(cat.id, false));
+  section.querySelector('.cat-edit-toggle').addEventListener('click', () => setCategoryEditing(cat.id, true));
   section.querySelector('.cat-rename').addEventListener('click', () => startRenameCategory(cat.id));
   section.querySelector('.cat-delete').addEventListener('click', () => {
     const current = loadCategories().find(c => c.id === cat.id);
@@ -173,12 +203,15 @@ function buildCategoryView(cat) {
 function insertCategoryTab(cat) {
   const btn = document.createElement('button');
   btn.className = 'tab';
+  btn.draggable = true;
   btn.dataset.view = 'cat-' + cat.id;
   btn.textContent = cat.name;
-  const addBtn = document.querySelector('.tab-add');
-  addBtn.parentNode.insertBefore(btn, addBtn);
+  // Sit before Settings (which stays near the end); the "+" stays truly last.
+  const anchor = document.querySelector('.tab[data-view="settings"]') || document.querySelector('.tab-add');
+  anchor.parentNode.insertBefore(btn, anchor);
 }
 function insertCategoryView(cat) {
+  if (!cat.cards.length) editingCats.add(cat.id); // a fresh category opens ready to add
   const footer = document.querySelector('.page > footer');
   footer.parentNode.insertBefore(buildCategoryView(cat), footer);
   populateCategoryGrid(cat);
@@ -278,8 +311,7 @@ function ensureAddButton() {
   add.title = 'Add category';
   add.setAttribute('aria-label', 'Add category');
   add.textContent = '+';
-  const settingsTab = document.querySelector('.tab[data-view="settings"]');
-  settingsTab.parentNode.insertBefore(add, settingsTab);
+  document.querySelector('.tabs').appendChild(add); // always last, anchors drag-reorder
   add.addEventListener('click', startNewCategory);
 }
 
