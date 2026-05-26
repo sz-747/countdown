@@ -15,6 +15,7 @@ import {
   seedDefaultSubjects, renderSubjectChips, renderSubjectDatalist, setupSubjectForm,
 } from './subjects.js';
 import { setupShare, checkImport } from './share.js';
+import { setupCassettePlayer } from './player.js';
 
 (async () => {
   buildYearGrid();
@@ -37,6 +38,7 @@ import { setupShare, checkImport } from './share.js';
   setupExports();
   setupPersonalize();
   setupShare();
+  setupCassettePlayer();
   checkImport();
   await syncTime();
   update();

@@ -51,6 +51,64 @@
     </div>
   </header>
 
+  <aside class="cassette-player" id="cassette-player" aria-label="Music player">
+    <div class="cassette-shell" id="cassette-shell">
+      <div class="cassette-top">
+        <div class="cassette-meta">
+          <div class="cassette-label">Study tapes</div>
+          <div class="cassette-title" id="cassette-title">Load a tape</div>
+        </div>
+        <button class="cassette-file-btn" type="button" id="cassette-file-btn" title="Add tapes" aria-label="Add tapes">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+          <span>Tapes</span>
+        </button>
+        <input class="cassette-file-input" id="cassette-file-input" type="file" accept="audio/*,video/mp4,video/*" multiple>
+      </div>
+
+      <div class="cassette-window" aria-hidden="true">
+        <div class="reel left"><span></span></div>
+        <div class="tape-line"></div>
+        <div class="reel right"><span></span></div>
+      </div>
+
+      <div class="cassette-time">
+        <span class="cassette-stamp" id="cassette-current">0:00</span>
+        <input class="cassette-progress" id="cassette-progress" type="range" min="0" max="1000" value="0" aria-label="Seek">
+        <span class="cassette-stamp" id="cassette-duration">0:00</span>
+      </div>
+
+      <div class="cassette-controls">
+        <button type="button" class="cassette-control" id="cassette-shuffle" title="Shuffle" aria-label="Shuffle" aria-pressed="false">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.5h2.7l7.3 9h2.5M14 2.5l2 2-2 2"/><path d="M2.5 13.5h2.7l2.3-2.85"/><path d="M10.2 6.85 12.5 4.5"/><path d="M14 11.5l2 2-2 2"/></svg>
+        </button>
+        <button type="button" class="cassette-control" id="cassette-prev" title="Previous" aria-label="Previous">
+          <svg viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><path d="M5 4.25a.75.75 0 0 1 1.5 0v3.4l6.1-3.52A.85.85 0 0 1 14 4.86v8.28a.85.85 0 0 1-1.4.73L6.5 10.35v3.4a.75.75 0 0 1-1.5 0Z"/></svg>
+        </button>
+        <button type="button" class="cassette-control cassette-play" id="cassette-play" title="Play" aria-label="Play">
+          <svg class="icon-play" viewBox="0 0 22 22" fill="currentColor" aria-hidden="true"><path d="M7 4.6a.9.9 0 0 1 1.37-.77l9 6.4a.9.9 0 0 1 0 1.54l-9 6.4A.9.9 0 0 1 7 17.4Z"/></svg>
+          <svg class="icon-pause" viewBox="0 0 22 22" fill="currentColor" aria-hidden="true"><rect x="5.5" y="4.5" width="4" height="13" rx="1.2"/><rect x="12.5" y="4.5" width="4" height="13" rx="1.2"/></svg>
+        </button>
+        <button type="button" class="cassette-control" id="cassette-next" title="Next" aria-label="Next">
+          <svg viewBox="0 0 18 18" fill="currentColor" aria-hidden="true"><path d="M13 4.25a.75.75 0 0 0-1.5 0v3.4L5.4 4.13A.85.85 0 0 0 4 4.86v8.28a.85.85 0 0 0 1.4.73l6.1-3.52v3.4a.75.75 0 0 0 1.5 0Z"/></svg>
+        </button>
+        <button type="button" class="cassette-control" id="cassette-repeat" title="Repeat" aria-label="Repeat" aria-pressed="false">
+          <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7.5a3 3 0 0 1 3-3h6.5M11.5 2.5l2.2 2-2.2 2"/><path d="M14 10.5a3 3 0 0 1-3 3H4.5M6.5 15.5l-2.2-2 2.2-2"/></svg>
+        </button>
+      </div>
+
+      <div class="cassette-volume">
+        <button type="button" class="cassette-control cassette-mute" id="cassette-mute" title="Mute" aria-label="Mute" aria-pressed="false">
+          <svg class="icon-vol" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5h2.5L9 3.5v11l-3.5-3H3Z" fill="currentColor" stroke="none"/><path d="M11.5 6.5a3.5 3.5 0 0 1 0 5M13.5 4.5a6 6 0 0 1 0 9"/></svg>
+          <svg class="icon-muted" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6.5h2.5L9 3.5v11l-3.5-3H3Z" fill="currentColor" stroke="none"/><path d="M12 7l4 4M16 7l-4 4"/></svg>
+        </button>
+        <input class="cassette-volume-slider" id="cassette-volume" type="range" min="0" max="1" step="0.01" value="0.8" aria-label="Volume">
+      </div>
+
+      <div class="cassette-list" id="cassette-list" aria-label="Playlist"></div>
+    </div>
+    <audio id="cassette-audio" preload="metadata"></audio>
+  </aside>
+
   <main class="view active" id="view-countdown">
     <section class="card trials">
       <div class="label">Trial Exams</div>
