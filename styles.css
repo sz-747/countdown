@@ -139,6 +139,15 @@
     width: min(330px, calc(100vw - 2rem));
   }
 
+  /* Draggable surfaces */
+  .cassette-meta,
+  .cassette-window,
+  .cassette-player.minimized .cassette-mini { cursor: grab; touch-action: none; }
+  .cassette-mini-expand { cursor: grab; }
+
+  .cassette-player.dragging { cursor: grabbing; user-select: none; }
+  .cassette-player.dragging * { cursor: grabbing !important; }
+
   /* --- Retro shell: ribbed plastic body with corner screws --- */
   .cassette-shell {
     position: relative;

@@ -1,6 +1,7 @@
 const PLAYER_VOLUME_KEY = 'countdown.cassette.volume.v1';
 const PLAYER_TRACK_KEY = 'countdown.cassette.track.v1';
 const PLAYER_MINIMIZED_KEY = 'countdown.cassette.minimized.v1';
+const PLAYER_POS_KEY = 'countdown.cassette.pos.v1';
 
 const BUILT_IN_TAPES = [
   {
@@ -44,15 +45,20 @@ export function setupCassettePlayer() {
   let shuffle = false;
   let repeat = false;
   let seeking = false;
+  let positioned = false;
+  let justDragged = false;
 
   audio.volume = restoreVolume();
   volume.value = audio.volume;
   paintRange(volume);
   paintRange(progress);
-  if (localStorage.getItem(PLAYER_MINIMIZED_KEY) === '1') player.classList.add('minimized');
+  // Default to the compact widget so it stays out of the way until summoned.
+  const savedMin = localStorage.getItem(PLAYER_MINIMIZED_KEY);
+  if (savedMin === null || savedMin === '1') player.classList.add('minimized');
   renderPlaylist();
   loadTape(currentIndex, false);
   updateMuteButton();
+  setupDragAndDock();
 
   fileBtn.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', () => {
@@ -69,7 +75,10 @@ export function setupCassettePlayer() {
   });
 
   minBtn.addEventListener('click', () => setMinimized(true));
-  expandBtn.addEventListener('click', () => setMinimized(false));
+  expandBtn.addEventListener('click', () => {
+    if (justDragged) return;
+    setMinimized(false);
+  });
 
   playBtn.addEventListener('click', togglePlay);
   miniPlayBtn.addEventListener('click', togglePlay);
@@ -170,6 +179,95 @@ export function setupCassettePlayer() {
   function setMinimized(min) {
     player.classList.toggle('minimized', min);
     localStorage.setItem(PLAYER_MINIMIZED_KEY, min ? '1' : '0');
+    clampIntoView();
+  }
+
+  function setupDragAndDock() {
+    applySavedPosition();
+
+    let dragging = false;
+    let moved = false;
+    let startX = 0;
+    let startY = 0;
+    let baseLeft = 0;
+    let baseTop = 0;
+
+    player.addEventListener('pointerdown', e => {
+      if (!isDesktop() || e.button !== 0) return;
+      if (e.target.closest('input, .cassette-control, .cassette-mini-play, .cassette-icon-btn, .cassette-track')) return;
+      const rect = player.getBoundingClientRect();
+      baseLeft = rect.left;
+      baseTop = rect.top;
+      startX = e.clientX;
+      startY = e.clientY;
+      dragging = true;
+      moved = false;
+      player.setPointerCapture(e.pointerId);
+    });
+
+    player.addEventListener('pointermove', e => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (!moved && Math.hypot(dx, dy) < 4) return;
+      moved = true;
+      positioned = true;
+      player.classList.add('dragging');
+      setPos(baseLeft + dx, baseTop + dy);
+    });
+
+    player.addEventListener('pointerup', e => {
+      if (!dragging) return;
+      dragging = false;
+      player.classList.remove('dragging');
+      try { player.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      if (!moved) return;
+      clampIntoView();
+      const rect = player.getBoundingClientRect();
+      localStorage.setItem(PLAYER_POS_KEY, JSON.stringify({ left: rect.left, top: rect.top }));
+      justDragged = true;
+      setTimeout(() => { justDragged = false; }, 0);
+    });
+
+    // Auto-dock: collapse to the widget when interacting anywhere else.
+    document.addEventListener('pointerdown', e => {
+      if (player.classList.contains('minimized')) return;
+      if (player.contains(e.target)) return;
+      setMinimized(true);
+    });
+
+    window.addEventListener('resize', clampIntoView);
+  }
+
+  function applySavedPosition() {
+    if (!isDesktop()) return;
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(PLAYER_POS_KEY) || 'null'); } catch { /* ignore */ }
+    if (saved && Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
+      positioned = true;
+      setPos(saved.left, saved.top);
+      clampIntoView();
+    }
+  }
+
+  function setPos(left, top) {
+    player.style.left = `${left}px`;
+    player.style.top = `${top}px`;
+    player.style.right = 'auto';
+    player.style.bottom = 'auto';
+  }
+
+  function clampIntoView() {
+    if (!positioned || !isDesktop()) return;
+    const rect = player.getBoundingClientRect();
+    const pad = 8;
+    const left = Math.min(Math.max(pad, rect.left), window.innerWidth - rect.width - pad);
+    const top = Math.min(Math.max(pad, rect.top), window.innerHeight - rect.height - pad);
+    setPos(left, top);
+  }
+
+  function isDesktop() {
+    return window.innerWidth > 900;
   }
 
   function loadTape(index, autoplay) {
