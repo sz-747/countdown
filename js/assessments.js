@@ -3,8 +3,8 @@
 
 import { daysBetween, fmtAssessDate, urgencyColor, fmtExamDate, fmtTimeStr } from './utils.js';
 import { now } from './time.js';
-import { slugify, assessToEvent, buildICS, downloadICS } from './ics.js';
 import { createDatePicker, createTimePicker } from './pickers.js';
+import { switchTo } from './tabs.js';
 import { loadExams } from './exams.js';
 import { buildCategoryEditCard, removeCard } from './categories.js';
 import { update } from './refresh.js';
@@ -43,16 +43,6 @@ export function buildAssessCards(list, gridId = 'assess-grid', opts = {}) {
     card.querySelector('.label span').textContent = a.label;
     card.querySelector('.name').textContent = a.name;
     card.querySelector('.meta').textContent = fmtAssessDate(a.date, a.noTime);
-    if (!opts.noCalendar) {
-      const calBtn = document.createElement('button');
-      calBtn.type = 'button';
-      calBtn.className = 'cal-btn';
-      calBtn.textContent = 'Add to calendar';
-      calBtn.addEventListener('click', () => {
-        downloadICS(slugify(a.name) + '.ics', buildICS([assessToEvent(a)]));
-      });
-      card.appendChild(calBtn);
-    }
     if (opts.withActions) {
       const actions = document.createElement('div');
       actions.className = 'card-actions';
@@ -70,6 +60,16 @@ export function buildAssessCards(list, gridId = 'assess-grid', opts = {}) {
     }
     grid.appendChild(card);
   });
+  if (!list.length && gridId === 'assess-grid') {
+    const empty = document.createElement('div');
+    empty.className = 'assess-empty';
+    empty.innerHTML = `
+      <p>No assessment cards yet.</p>
+      <button type="button" class="btn" id="assess-empty-cta">Create your first in Settings</button>
+    `;
+    empty.querySelector('#assess-empty-cta').addEventListener('click', () => switchTo('settings'));
+    grid.appendChild(empty);
+  }
 }
 
 export function updateAssessments(list) {
@@ -253,15 +253,3 @@ export function setupAssessForm() {
   });
 }
 
-export function setupExports() {
-  document.getElementById('assess-export').addEventListener('click', () => {
-    const list = allAssessments();
-    if (!list.length) return;
-    downloadICS('assessments.ics', buildICS(list.map(assessToEvent)));
-  });
-  document.getElementById('exam-export').addEventListener('click', () => {
-    const list = hscAssessments();
-    if (!list.length) return;
-    downloadICS('hsc-exams.ics', buildICS(list.map(assessToEvent)));
-  });
-}

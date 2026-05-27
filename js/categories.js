@@ -54,7 +54,7 @@ function populateCategoryGrid(cat) {
       : '<div class="exam-empty">No countdowns yet.</div>';
     return;
   }
-  buildAssessCards(categoryCardObjects(cat), gridId, { withActions: editing, noCalendar: true });
+  buildAssessCards(categoryCardObjects(cat), gridId, { withActions: editing });
 }
 
 // Flip a category view between editing (form + per-card actions) and the clean

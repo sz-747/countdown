@@ -15,13 +15,6 @@
 </head>
 <body>
 <div class="page">
-  <div class="import-banner" id="import-banner" hidden>
-    <span class="import-text" id="import-text">Someone shared a study setup with you.</span>
-    <div class="import-actions">
-      <button type="button" class="btn" id="import-accept">Import</button>
-      <button type="button" class="btn ghost" id="import-dismiss">Dismiss</button>
-    </div>
-  </div>
   <header>
     <div class="brand">Year 12 — the long road</div>
     <div class="tabs">
@@ -229,7 +222,6 @@
     <div>
       <div class="settings-head">
         <div class="settings-title">Assessment cards</div>
-        <button type="button" class="btn ghost" id="assess-export">Add all to calendar</button>
       </div>
       <div class="settings-desc">Manage assessment dates shown on the Assessments tab. Edit or remove defaults, or add your own. Saved to this browser only.</div>
     </div>
@@ -246,7 +238,6 @@
     <div>
       <div class="settings-head">
         <div class="settings-title">Exam timetable</div>
-        <button type="button" class="btn ghost" id="exam-export">Add all to calendar</button>
       </div>
       <div class="settings-desc">Add each HSC exam date and subject. They'll appear as markers on the Year grid. Saved to this browser only.</div>
     </div>
@@ -259,15 +250,6 @@
     </form>
 
     <div class="exam-list" id="exam-list"></div>
-
-    <div>
-      <div class="settings-title">Share &amp; backup</div>
-      <div class="settings-desc">Copy a link that bundles your subjects, assessments and exams. Anyone who opens it can import your setup into their own browser.</div>
-      <div class="share-row">
-        <button type="button" class="btn" id="share-btn">Copy share link</button>
-        <span class="share-status" id="share-status"></span>
-      </div>
-    </div>
 
     <datalist id="subjects-list"></datalist>
   </section>

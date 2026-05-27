@@ -9,12 +9,11 @@ import { setupPersonalize } from './personalize.js';
 import { seedDefaultExams, setupExamForm, renderExamList } from './exams.js';
 import {
   seedDefaultAssessments, allAssessments, UA, buildAssessCards, hscAssessments,
-  renderCustomAssessList, setupAssessForm, setupExports,
+  renderCustomAssessList, setupAssessForm,
 } from './assessments.js';
 import {
   seedDefaultSubjects, renderSubjectChips, renderSubjectDatalist, setupSubjectForm,
 } from './subjects.js';
-import { setupShare, checkImport } from './share.js';
 import { setupCassettePlayer } from './player.js';
 
 (async () => {
@@ -35,11 +34,8 @@ import { setupCassettePlayer } from './player.js';
   renderSubjectChips();
   renderSubjectDatalist();
   setupSubjectForm();
-  setupExports();
   setupPersonalize();
-  setupShare();
   setupCassettePlayer();
-  checkImport();
   await syncTime();
   update();
   paintYearGrid();
