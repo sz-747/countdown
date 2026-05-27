@@ -206,16 +206,6 @@
     </div>
 
     <div>
-      <div class="settings-title">Your subjects</div>
-      <div class="settings-desc">Pick the subjects you take. They power suggestions when you add assessments and exams below. Saved to this browser only.</div>
-      <div class="chips" id="subject-chips"></div>
-      <form class="chip-form" id="subject-form">
-        <input type="text" id="subject-input" placeholder="Add a subject (e.g. Physics)" autocomplete="off">
-        <button type="submit" class="btn">Add</button>
-      </form>
-    </div>
-
-    <div>
       <div class="settings-head">
         <div class="settings-title">Assessment cards</div>
       </div>
@@ -225,7 +215,7 @@
     <form class="exam-form" id="assess-form">
       <div id="assess-date-host"></div>
       <div id="assess-time-host"></div>
-      <input type="text" id="assess-subject" list="subjects-list" placeholder="Subject (e.g. Chemistry AT3)" autocomplete="off" required>
+      <input type="text" id="assess-subject" placeholder="Subject (e.g. Chemistry AT3)" autocomplete="off" required>
       <button type="submit" class="btn">Add</button>
     </form>
 
@@ -241,13 +231,11 @@
     <form class="exam-form" id="exam-form">
       <div id="exam-date-host"></div>
       <div id="exam-time-host"></div>
-      <input type="text" id="exam-subject" list="subjects-list" placeholder="Subject (e.g. English Paper 1)" autocomplete="off" required>
+      <input type="text" id="exam-subject" placeholder="Subject (e.g. English Paper 1)" autocomplete="off" required>
       <button type="submit" class="btn">Add</button>
     </form>
 
     <div class="exam-list" id="exam-list"></div>
-
-    <datalist id="subjects-list"></datalist>
   </section>
 
   <footer>

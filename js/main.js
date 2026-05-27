@@ -11,15 +11,11 @@ import {
   seedDefaultAssessments, allAssessments, UA, buildAssessCards, hscAssessments,
   renderCustomAssessList, setupAssessForm,
 } from './assessments.js';
-import {
-  seedDefaultSubjects, renderSubjectChips, renderSubjectDatalist, setupSubjectForm,
-} from './subjects.js';
 import { setupCassettePlayer } from './player.js';
 
 (async () => {
   buildYearGrid();
   seedDefaultAssessments();
-  seedDefaultSubjects();
   buildAssessCards(allAssessments(), 'assess-grid');
   buildAssessCards(UA, 'ua-grid');
   setupTabs();
@@ -31,9 +27,6 @@ import { setupCassettePlayer } from './player.js';
   setupAssessForm();
   renderCustomAssessList();
   buildAssessCards(hscAssessments(), 'hsc-grid');
-  renderSubjectChips();
-  renderSubjectDatalist();
-  setupSubjectForm();
   setupPersonalize();
   setupCassettePlayer();
   await syncTime();

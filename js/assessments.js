@@ -199,7 +199,6 @@ function buildCustomAssessEditRow(a) {
   subjectInput.type = 'text';
   subjectInput.className = 'edit-subject';
   subjectInput.placeholder = 'Subject';
-  subjectInput.setAttribute('list', 'subjects-list');
   subjectInput.autocomplete = 'off';
   subjectInput.required = true;
   subjectInput.value = a.name;
