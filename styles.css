@@ -228,14 +228,13 @@
 
   .cassette-title {
     margin-top: 0.05rem;
-    overflow: hidden;
     color: var(--cassette-ink);
     font-family: 'Fraunces', serif;
     font-style: italic;
     font-size: 0.92rem;
     line-height: 1.2;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   .cassette-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
@@ -588,7 +587,7 @@
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    max-width: 170px;
+    max-width: 240px;
     padding: 0;
     background: transparent;
     border: 0;

@@ -20,11 +20,11 @@ export function setupCassettePlayer() {
   const shell = document.getElementById('cassette-shell');
   const label = document.getElementById('cassette-label');
   const title = document.getElementById('cassette-title');
+  const mini = document.getElementById('cassette-mini');
   const miniTitle = document.getElementById('cassette-mini-title');
   const fileBtn = document.getElementById('cassette-file-btn');
   const fileInput = document.getElementById('cassette-file-input');
   const minBtn = document.getElementById('cassette-min');
-  const expandBtn = document.getElementById('cassette-mini-expand');
   const playBtn = document.getElementById('cassette-play');
   const miniPlayBtn = document.getElementById('cassette-mini-play');
   const prevBtn = document.getElementById('cassette-prev');
@@ -75,13 +75,17 @@ export function setupCassettePlayer() {
   });
 
   minBtn.addEventListener('click', () => setMinimized(true));
-  expandBtn.addEventListener('click', () => {
+
+  // Clicking anywhere on the minimized pill expands it (except the play button,
+  // which keeps its own action). justDragged guards against a drag-release click.
+  mini.addEventListener('click', e => {
     if (justDragged) return;
+    if (e.target.closest('.cassette-mini-play')) return;
     setMinimized(false);
   });
 
   playBtn.addEventListener('click', togglePlay);
-  miniPlayBtn.addEventListener('click', togglePlay);
+  miniPlayBtn.addEventListener('click', e => { e.stopPropagation(); togglePlay(); });
 
   prevBtn.addEventListener('click', () => {
     if (!tapes.length) return;
@@ -187,6 +191,7 @@ export function setupCassettePlayer() {
 
     let dragging = false;
     let moved = false;
+    let captured = false;
     let startX = 0;
     let startY = 0;
     let baseLeft = 0;
@@ -202,7 +207,10 @@ export function setupCassettePlayer() {
       startY = e.clientY;
       dragging = true;
       moved = false;
-      player.setPointerCapture(e.pointerId);
+      captured = false;
+      // Don't capture yet: capturing on pointerdown retargets the click event
+      // to the player and swallows the expand button's click. Capture lazily
+      // once an actual drag begins (see pointermove).
     });
 
     player.addEventListener('pointermove', e => {
@@ -210,6 +218,10 @@ export function setupCassettePlayer() {
       const dx = e.clientX - startX;
       const dy = e.clientY - startY;
       if (!moved && Math.hypot(dx, dy) < 4) return;
+      if (!captured) {
+        try { player.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+        captured = true;
+      }
       moved = true;
       positioned = true;
       player.classList.add('dragging');
@@ -220,7 +232,9 @@ export function setupCassettePlayer() {
       if (!dragging) return;
       dragging = false;
       player.classList.remove('dragging');
-      try { player.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      if (captured) {
+        try { player.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+      }
       if (!moved) return;
       clampIntoView();
       const rect = player.getBoundingClientRect();
