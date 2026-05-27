@@ -1719,7 +1719,6 @@
     gap: 1rem;
     flex-wrap: wrap;
   }
-  .personalize-row--theme { align-items: flex-start; }
   .personalize-label {
     font-size: 0.72rem;
     letter-spacing: 0.12em;
@@ -1727,41 +1726,6 @@
     color: var(--muted);
     min-width: 7rem;
     padding-top: 0.3rem;
-  }
-  .theme-grid {
-    flex: 1;
-    min-width: 14rem;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
-    gap: 0.5rem;
-  }
-  .theme-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    background: var(--t-bg);
-    color: var(--t-fg);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 0.55rem 0.7rem;
-    cursor: pointer;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.78rem;
-    transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-  }
-  .theme-card:hover { transform: translateY(-1px); border-color: var(--t-fg); }
-  .theme-card.active {
-    border-color: var(--accent-trials);
-    box-shadow: 0 0 0 1px var(--accent-trials);
-  }
-  .theme-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .theme-dots { display: inline-flex; gap: 0.2rem; flex-shrink: 0; }
-  .theme-dots span {
-    width: 9px;
-    height: 9px;
-    border-radius: 999px;
-    display: inline-block;
   }
   .personalize-input {
     flex: 1;
