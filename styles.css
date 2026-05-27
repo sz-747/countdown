@@ -1734,6 +1734,49 @@
   .personalize-input:focus { border-color: var(--accent-trials); }
   .personalize-input::placeholder { color: var(--muted); }
 
+  /* Monkeytype-style theme picker: each card paints itself in its own palette. */
+  .theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: 0.6rem;
+  }
+  .theme-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.7rem 0.85rem;
+    border-radius: 0.6rem;
+    border: 1px solid var(--c-line);
+    background: var(--c-bg);
+    color: var(--c-text);
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .theme-card:hover,
+  .theme-card:focus-visible {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    outline: none;
+  }
+  .theme-card.active {
+    box-shadow: 0 0 0 2px var(--c-text);
+  }
+  .theme-name {
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .theme-dots { display: inline-flex; gap: 0.28rem; flex-shrink: 0; }
+  .theme-dots span {
+    width: 0.62rem;
+    height: 0.62rem;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px var(--c-line);
+  }
+
   @media (max-width: 900px) {
     .page { padding: 2rem 1.5rem; }
     .cassette-player {
