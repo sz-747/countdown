@@ -129,156 +129,248 @@
   body.is-fullscreen .fs-btn .icon-exit { display: block; }
 
   .cassette-player {
+    --played: 0;
+    --cassette-cream: #efe7d4;
+    --cassette-ink: #2a2620;
     position: fixed;
     right: 1.5rem;
     bottom: 1.5rem;
     z-index: 80;
-    width: min(348px, calc(100vw - 2rem));
+    width: min(330px, calc(100vw - 2rem));
   }
 
+  /* --- Retro shell: ribbed plastic body with corner screws --- */
   .cassette-shell {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 0.8rem;
     background:
-      linear-gradient(180deg, rgba(244, 241, 234, 0.05), rgba(244, 241, 234, 0) 40%),
-      rgba(12, 13, 18, 0.94);
-    border: 1px solid rgba(244, 241, 234, 0.12);
-    border-radius: 14px;
-    padding: 1rem 1.05rem;
+      repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.16) 0 2px, rgba(244, 241, 234, 0.015) 2px 5px) 0 0 / 100% 16px no-repeat,
+      repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.16) 0 2px, rgba(244, 241, 234, 0.015) 2px 5px) 0 100% / 100% 16px no-repeat,
+      linear-gradient(160deg, #33363f 0%, #23252c 45%, #191b21 100%);
+    border: 1px solid rgba(0, 0, 0, 0.5);
+    border-radius: 16px;
+    padding: 1.15rem 1.05rem 1rem;
     box-shadow:
-      0 1px 0 rgba(244, 241, 234, 0.06) inset,
-      0 24px 60px -18px rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(18px);
+      0 1px 0 rgba(244, 241, 234, 0.12) inset,
+      0 -1px 0 rgba(0, 0, 0, 0.5) inset,
+      0 26px 60px -20px rgba(0, 0, 0, 0.8);
   }
 
+  .cassette-player.playing .cassette-shell {
+    box-shadow:
+      0 1px 0 rgba(244, 241, 234, 0.12) inset,
+      0 -1px 0 rgba(0, 0, 0, 0.5) inset,
+      0 0 0 1px rgba(232, 184, 107, 0.18),
+      0 26px 60px -20px rgba(0, 0, 0, 0.8);
+  }
+
+  .screw {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 35% 30%, #4a4d56, #15161b 80%);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.4);
+  }
+
+  .screw::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 5px;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.55);
+    transform: rotate(40deg);
+  }
+
+  .screw.tl { top: 8px; left: 8px; }
+  .screw.tr { top: 8px; right: 8px; }
+  .screw.bl { bottom: 8px; left: 8px; }
+  .screw.br { bottom: 8px; right: 8px; }
+
+  /* --- Header: cream label sticker + icon buttons --- */
   .cassette-top {
     display: flex;
-    align-items: center;
-    gap: 0.6rem;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0 0.3rem;
   }
 
-  .cassette-meta { min-width: 0; flex: 1; }
+  .cassette-meta {
+    flex: 1;
+    min-width: 0;
+    padding: 0.3rem 0.6rem 0.34rem;
+    background: linear-gradient(180deg, #f6efdd, #e4dcc6);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.18);
+  }
 
   .cassette-label {
-    font-size: 0.56rem;
-    letter-spacing: 0.24em;
+    font-size: 0.52rem;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    color: var(--accent-trials);
+    color: var(--accent-hsc);
   }
 
+  .cassette-player.error .cassette-label { color: #b4452f; }
+
   .cassette-title {
-    margin-top: 0.2rem;
+    margin-top: 0.05rem;
     overflow: hidden;
-    color: var(--fg);
-    font-size: 0.84rem;
-    letter-spacing: 0.01em;
+    color: var(--cassette-ink);
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 0.92rem;
+    line-height: 1.2;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .cassette-file-btn {
+  .cassette-actions { display: flex; gap: 0.3rem; flex-shrink: 0; }
+
+  .cassette-icon-btn {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    flex-shrink: 0;
-    background: rgba(244, 241, 234, 0.05);
-    border: 1px solid var(--line);
-    border-radius: 999px;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: linear-gradient(180deg, #33363f, #1f2128);
+    border: 1px solid rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
     color: var(--muted);
     cursor: pointer;
-    font-family: 'Inter', sans-serif;
-    font-size: 0.6rem;
-    letter-spacing: 0.14em;
-    padding: 0.36rem 0.7rem 0.36rem 0.58rem;
-    text-transform: uppercase;
-    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+    box-shadow: 0 1px 0 rgba(244, 241, 234, 0.08) inset;
+    transition: color 0.18s ease, transform 0.12s ease;
   }
 
-  .cassette-file-btn svg { width: 12px; height: 12px; }
-
-  .cassette-file-btn:hover {
-    border-color: rgba(244, 241, 234, 0.45);
-    color: var(--fg);
-    background: rgba(244, 241, 234, 0.08);
-  }
-
+  .cassette-icon-btn svg { width: 13px; height: 13px; display: block; }
+  .cassette-icon-btn:hover { color: var(--fg); }
+  .cassette-icon-btn:active { transform: translateY(1px); }
   .cassette-file-input { display: none; }
 
-  /* --- Tape window --- */
+  /* --- Tape window: glossy plastic over winding reels --- */
   .cassette-window {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: space-around;
-    height: 84px;
+    height: 86px;
     overflow: hidden;
-    border: 1px solid rgba(244, 241, 234, 0.1);
-    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.6);
+    border-radius: 8px;
+    padding: 0 1.4rem;
     background:
-      radial-gradient(120% 140% at 50% -20%, rgba(244, 241, 234, 0.06), transparent 60%),
-      linear-gradient(180deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.4));
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) inset;
+      radial-gradient(140% 120% at 50% -30%, rgba(244, 241, 234, 0.07), transparent 55%),
+      linear-gradient(180deg, #0c0d11, #050608);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.55) inset, 0 1px 0 rgba(244, 241, 234, 0.05);
   }
-
-  .cassette-window::before,
-  .cassette-window::after {
-    content: '';
-    position: absolute;
-    bottom: 12px;
-    width: 46px;
-    height: 6px;
-    border-radius: 999px;
-    background: rgba(244, 241, 234, 0.12);
-  }
-
-  .cassette-window::before { left: 36px; }
-  .cassette-window::after { right: 36px; }
 
   .reel {
     position: relative;
-    width: 52px;
-    height: 52px;
+    width: 54px;
+    height: 54px;
+    border-radius: 999px;
+    background: radial-gradient(circle, #14100c 0 50%, #14100c 100%);
+    box-shadow: 0 0 0 1px rgba(244, 241, 234, 0.14) inset, 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+
+  .reel.left { --r: calc(9px + 16px * (1 - var(--played))); }
+  .reel.right { --r: calc(9px + 16px * var(--played)); }
+
+  .reel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
     border-radius: 999px;
     background:
-      radial-gradient(circle, rgba(244, 241, 234, 0.9) 0 14%, transparent 15%),
-      radial-gradient(circle at 50% 50%, rgba(244, 241, 234, 0.05) 0 30%, transparent 31%),
-      conic-gradient(from 0deg, rgba(244, 241, 234, 0.32), rgba(244, 241, 234, 0.08) 22%, rgba(244, 241, 234, 0.32) 45%, rgba(244, 241, 234, 0.08) 68%, rgba(244, 241, 234, 0.32));
-    box-shadow:
-      0 0 0 1px rgba(244, 241, 234, 0.18) inset,
-      0 3px 8px rgba(0, 0, 0, 0.45);
+      conic-gradient(from 0deg, rgba(244, 241, 234, 0.12), transparent 28%, rgba(244, 241, 234, 0.07) 52%, transparent 82%),
+      repeating-radial-gradient(circle, #241a14 0 1.6px, #3b2a1f 1.6px 3.3px);
+    -webkit-mask: radial-gradient(circle, #000 0 var(--r, 24px), transparent calc(var(--r, 24px) + 0.5px));
+    mask: radial-gradient(circle, #000 0 var(--r, 24px), transparent calc(var(--r, 24px) + 0.5px));
   }
 
-  .reel span {
+  .hub {
     position: absolute;
-    inset: 9px;
+    inset: 0;
+    margin: auto;
+    width: 19px;
+    height: 19px;
     border-radius: 999px;
-    border: 1px dashed rgba(244, 241, 234, 0.2);
-    background: radial-gradient(circle, var(--accent-hsc) 0 55%, transparent 56%);
-    opacity: 0.55;
+    background:
+      radial-gradient(circle, #0a0b0f 0 26%, transparent 27%),
+      repeating-conic-gradient(#efe9db 0 18deg, #c4bca8 18deg 36deg);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 4px rgba(0, 0, 0, 0.4);
   }
 
-  .tape-line {
+  .tape-bridge {
     position: absolute;
-    left: 28%;
-    right: 28%;
-    top: 50%;
+    left: 30%;
+    right: 30%;
+    bottom: 15px;
     height: 3px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, rgba(232, 184, 107, 0.15), rgba(232, 184, 107, 0.6), rgba(232, 184, 107, 0.15));
-    transform: translateY(-50%);
+    border-radius: 2px;
+    background: linear-gradient(90deg, rgba(59, 42, 31, 0), rgba(78, 56, 40, 0.9), rgba(59, 42, 31, 0));
   }
 
-  .cassette-shell.playing .reel {
-    animation: cassette-spin 1.4s linear infinite;
+  .cassette-gloss {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(118deg, rgba(244, 241, 234, 0.1) 0 22%, transparent 40% 100%);
+    mix-blend-mode: screen;
   }
 
-  .cassette-shell.loading .reel {
-    animation: cassette-spin 0.34s linear infinite;
+  .cassette-eq {
+    position: absolute;
+    left: 50%;
+    bottom: 8px;
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 16px;
+    opacity: 0;
+    transform: translateX(-50%);
+    transition: opacity 0.3s ease;
   }
+
+  .cassette-eq i {
+    width: 3px;
+    height: 4px;
+    border-radius: 1px;
+    background: var(--accent-trials);
+  }
+
+  .cassette-player.playing .cassette-eq { opacity: 0.85; }
+  .cassette-player.playing .cassette-eq i { animation: cassette-eq 0.9s ease-in-out infinite; }
+  .cassette-eq i:nth-child(2) { animation-delay: 0.18s; }
+  .cassette-eq i:nth-child(3) { animation-delay: 0.36s; }
+  .cassette-eq i:nth-child(4) { animation-delay: 0.12s; }
+  .cassette-eq i:nth-child(5) { animation-delay: 0.3s; }
+
+  @keyframes cassette-eq {
+    0%, 100% { height: 4px; }
+    50% { height: 15px; }
+  }
+
+  .cassette-player.playing .reel::before,
+  .cassette-player.playing .hub { animation: cassette-spin 1.5s linear infinite; }
+  .cassette-player.loading .reel::before,
+  .cassette-player.loading .hub { animation: cassette-spin 0.34s linear infinite; }
 
   @keyframes cassette-spin {
     to { transform: rotate(360deg); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cassette-player.playing .reel::before,
+    .cassette-player.playing .hub,
+    .cassette-player.loading .reel::before,
+    .cassette-player.loading .hub,
+    .cassette-player.playing .cassette-eq i,
+    .cassette-player.playing .cassette-mini-reel { animation: none; }
   }
 
   /* --- Time + sliders --- */
@@ -369,12 +461,12 @@
     box-shadow: 0 0 0 4px rgba(232, 184, 107, 0.3);
   }
 
-  /* --- Controls --- */
+  /* --- Transport keys (tape-deck style) --- */
   .cassette-controls {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.45rem;
+    gap: 0.32rem;
   }
 
   .cassette-control {
@@ -382,58 +474,59 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
-    padding: 0;
-    background: transparent;
-    border: 0;
-    border-radius: 999px;
+    min-width: 38px;
+    height: 30px;
+    padding: 0 0.4rem;
+    background: linear-gradient(180deg, #383b44, #1e2027);
+    border: 1px solid rgba(0, 0, 0, 0.55);
+    border-radius: 5px;
     color: var(--muted);
     cursor: pointer;
-    transition: color 0.18s ease, background 0.18s ease, transform 0.12s ease;
+    box-shadow: 0 1px 0 rgba(244, 241, 234, 0.1) inset, 0 2px 3px rgba(0, 0, 0, 0.45);
+    transition: color 0.16s ease, background 0.16s ease, transform 0.1s ease, box-shadow 0.1s ease;
   }
 
-  .cassette-control svg { width: 18px; height: 18px; display: block; }
+  .cassette-control svg { width: 16px; height: 16px; display: block; }
 
-  .cassette-control:hover {
-    color: var(--fg);
-    background: rgba(244, 241, 234, 0.07);
+  .cassette-control:hover { color: var(--fg); background: linear-gradient(180deg, #41444e, #24262e); }
+
+  .cassette-control:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5) inset;
   }
-
-  .cassette-control:active { transform: scale(0.92); }
 
   .cassette-control.active { color: var(--accent-trials); }
 
   .cassette-control.active::after {
     content: '';
     position: absolute;
-    left: 50%;
-    bottom: 3px;
-    width: 3px;
-    height: 3px;
+    top: 3px;
+    right: 4px;
+    width: 4px;
+    height: 4px;
     border-radius: 999px;
     background: var(--accent-trials);
-    transform: translateX(-50%);
+    box-shadow: 0 0 5px var(--accent-trials);
   }
 
   .cassette-play {
-    width: 46px;
-    height: 46px;
-    color: var(--bg);
-    background: var(--fg);
-    box-shadow: 0 6px 16px -4px rgba(244, 241, 234, 0.4);
+    min-width: 52px;
+    height: 32px;
+    color: #2a1c08;
+    background: linear-gradient(180deg, #f2c479, #d9982f);
+    border-color: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.45) inset, 0 2px 4px rgba(0, 0, 0, 0.5);
   }
 
-  .cassette-play svg { width: 22px; height: 22px; }
-  .cassette-play:hover {
-    color: var(--bg);
-    background: var(--fg);
-    transform: scale(1.05);
-  }
+  .cassette-play svg { width: 20px; height: 20px; }
+  .cassette-play:hover { color: #2a1c08; background: linear-gradient(180deg, #f6cd8a, #e0a23a); }
 
-  .cassette-play .icon-pause { display: none; }
-  .cassette-shell.playing .cassette-play .icon-play { display: none; }
-  .cassette-shell.playing .cassette-play .icon-pause { display: block; }
+  .cassette-play .icon-pause,
+  .cassette-mini-play .icon-pause { display: none; }
+  .cassette-player.playing .cassette-play .icon-play,
+  .cassette-player.playing .cassette-mini-play .icon-play { display: none; }
+  .cassette-player.playing .cassette-play .icon-pause,
+  .cassette-player.playing .cassette-mini-play .icon-pause { display: block; }
 
   .cassette-mute .icon-muted { display: none; }
   .cassette-mute.active .icon-vol { display: none; }
@@ -443,6 +536,76 @@
     display: flex;
     align-items: center;
     gap: 0.55rem;
+  }
+
+  /* --- Minimize / mini bar --- */
+  .cassette-mini { display: none; }
+
+  .cassette-player.minimized .cassette-shell { display: none; }
+
+  .cassette-player.minimized .cassette-mini {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.38rem 0.7rem 0.38rem 0.4rem;
+    background: linear-gradient(160deg, #33363f, #1b1d23);
+    border: 1px solid rgba(0, 0, 0, 0.5);
+    border-radius: 999px;
+    box-shadow: 0 1px 0 rgba(244, 241, 234, 0.1) inset, 0 16px 34px -14px rgba(0, 0, 0, 0.75);
+  }
+
+  .cassette-player.minimized { width: auto; }
+
+  .cassette-mini-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.5);
+    color: #2a1c08;
+    background: linear-gradient(180deg, #f2c479, #d9982f);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.45) inset;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+  }
+
+  .cassette-mini-play svg { width: 17px; height: 17px; display: block; }
+  .cassette-mini-play:active { transform: scale(0.93); }
+
+  .cassette-mini-expand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    max-width: 170px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    color: var(--fg);
+    cursor: pointer;
+  }
+
+  .cassette-mini-reel {
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background:
+      radial-gradient(circle, #efe9db 0 26%, transparent 27%),
+      conic-gradient(from 0deg, rgba(244, 241, 234, 0.4), transparent 30%, rgba(244, 241, 234, 0.4) 60%, transparent 90%);
+    box-shadow: 0 0 0 1px rgba(244, 241, 234, 0.3) inset;
+  }
+
+  .cassette-player.playing .cassette-mini-reel { animation: cassette-spin 1.5s linear infinite; }
+
+  .cassette-mini-title {
+    overflow: hidden;
+    font-size: 0.74rem;
+    letter-spacing: 0.01em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* --- Playlist --- */

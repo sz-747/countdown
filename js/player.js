@@ -1,5 +1,6 @@
 const PLAYER_VOLUME_KEY = 'countdown.cassette.volume.v1';
 const PLAYER_TRACK_KEY = 'countdown.cassette.track.v1';
+const PLAYER_MINIMIZED_KEY = 'countdown.cassette.minimized.v1';
 
 const BUILT_IN_TAPES = [
   {
@@ -13,12 +14,18 @@ const BUILT_IN_TAPES = [
 ];
 
 export function setupCassettePlayer() {
+  const player = document.getElementById('cassette-player');
   const audio = document.getElementById('cassette-audio');
   const shell = document.getElementById('cassette-shell');
+  const label = document.getElementById('cassette-label');
   const title = document.getElementById('cassette-title');
+  const miniTitle = document.getElementById('cassette-mini-title');
   const fileBtn = document.getElementById('cassette-file-btn');
   const fileInput = document.getElementById('cassette-file-input');
+  const minBtn = document.getElementById('cassette-min');
+  const expandBtn = document.getElementById('cassette-mini-expand');
   const playBtn = document.getElementById('cassette-play');
+  const miniPlayBtn = document.getElementById('cassette-mini-play');
   const prevBtn = document.getElementById('cassette-prev');
   const nextBtn = document.getElementById('cassette-next');
   const shuffleBtn = document.getElementById('cassette-shuffle');
@@ -30,7 +37,7 @@ export function setupCassettePlayer() {
   const duration = document.getElementById('cassette-duration');
   const list = document.getElementById('cassette-list');
 
-  if (!audio || !shell) return;
+  if (!player || !audio || !shell) return;
 
   let tapes = [...BUILT_IN_TAPES];
   let currentIndex = restoreTrackIndex(tapes);
@@ -42,8 +49,10 @@ export function setupCassettePlayer() {
   volume.value = audio.volume;
   paintRange(volume);
   paintRange(progress);
+  if (localStorage.getItem(PLAYER_MINIMIZED_KEY) === '1') player.classList.add('minimized');
   renderPlaylist();
   loadTape(currentIndex, false);
+  updateMuteButton();
 
   fileBtn.addEventListener('click', () => fileInput.click());
   fileInput.addEventListener('change', () => {
@@ -59,14 +68,11 @@ export function setupCassettePlayer() {
     loadTape(currentIndex, true);
   });
 
-  playBtn.addEventListener('click', () => {
-    if (!tapes.length) {
-      fileInput.click();
-      return;
-    }
-    if (audio.paused) playCurrent();
-    else audio.pause();
-  });
+  minBtn.addEventListener('click', () => setMinimized(true));
+  expandBtn.addEventListener('click', () => setMinimized(false));
+
+  playBtn.addEventListener('click', togglePlay);
+  miniPlayBtn.addEventListener('click', togglePlay);
 
   prevBtn.addEventListener('click', () => {
     if (!tapes.length) return;
@@ -120,18 +126,24 @@ export function setupCassettePlayer() {
     seeking = false;
   });
 
-  audio.addEventListener('loadstart', () => shell.classList.add('loading'));
-  audio.addEventListener('canplay', () => shell.classList.remove('loading'));
+  audio.addEventListener('loadstart', () => {
+    player.classList.remove('error');
+    player.classList.add('loading');
+  });
+  audio.addEventListener('canplay', () => player.classList.remove('loading'));
   audio.addEventListener('playing', () => {
-    shell.classList.remove('loading');
-    shell.classList.add('playing');
-    playBtn.setAttribute('aria-label', 'Pause');
-    playBtn.title = 'Pause';
+    player.classList.remove('loading', 'error');
+    player.classList.add('playing');
+    setPlayLabels('Pause');
+    setLabel('Now playing');
   });
   audio.addEventListener('pause', () => {
-    shell.classList.remove('playing');
-    playBtn.setAttribute('aria-label', 'Play');
-    playBtn.title = 'Play';
+    player.classList.remove('playing');
+    setPlayLabels('Play');
+    if (!player.classList.contains('error')) setLabel('Study tapes');
+  });
+  audio.addEventListener('error', () => {
+    if (audio.src) showError();
   });
   audio.addEventListener('timeupdate', updateProgress);
   audio.addEventListener('durationchange', updateProgress);
@@ -146,29 +158,64 @@ export function setupCassettePlayer() {
 
   window.addEventListener('beforeunload', () => revokeLocalTapes(tapes));
 
+  function togglePlay() {
+    if (!tapes.length) {
+      fileInput.click();
+      return;
+    }
+    if (audio.paused) playCurrent();
+    else audio.pause();
+  }
+
+  function setMinimized(min) {
+    player.classList.toggle('minimized', min);
+    localStorage.setItem(PLAYER_MINIMIZED_KEY, min ? '1' : '0');
+  }
+
   function loadTape(index, autoplay) {
     if (!tapes.length) {
-      title.textContent = 'Load a tape';
+      setTitles('Load a tape');
       list.innerHTML = '<div class="cassette-empty">No tapes loaded.</div>';
       return;
     }
 
     currentIndex = wrapIndex(index);
     const tape = tapes[currentIndex];
-    title.textContent = tape.title;
+    setTitles(tape.title);
+    player.classList.remove('error');
     audio.src = tape.src;
     localStorage.setItem(PLAYER_TRACK_KEY, String(currentIndex));
     renderPlaylist();
     updateProgress();
-
-    shell.classList.add('loading');
-    window.setTimeout(() => shell.classList.remove('loading'), 650);
     if (autoplay) playCurrent();
   }
 
   function playCurrent() {
-    audio.play().catch(() => {
-      shell.classList.remove('loading', 'playing');
+    const attempt = audio.play();
+    if (attempt && typeof attempt.catch === 'function') {
+      attempt.catch(() => showError());
+    }
+  }
+
+  function showError() {
+    player.classList.remove('loading', 'playing');
+    player.classList.add('error');
+    setLabel('Tape unavailable');
+  }
+
+  function setLabel(text) {
+    label.textContent = text;
+  }
+
+  function setTitles(text) {
+    title.textContent = text;
+    miniTitle.textContent = text;
+  }
+
+  function setPlayLabels(state) {
+    [playBtn, miniPlayBtn].forEach(btn => {
+      btn.setAttribute('aria-label', state);
+      btn.title = state;
     });
   }
 
@@ -183,7 +230,7 @@ export function setupCassettePlayer() {
       button.type = 'button';
       button.className = 'cassette-track';
       button.classList.toggle('active', index === currentIndex);
-      button.innerHTML = `<span>${escapeHtml(tape.title)}</span><strong>${index + 1}</strong>`;
+      button.innerHTML = `<span>${escapeHtml(tape.title)}</span><strong>${String(index + 1).padStart(2, '0')}</strong>`;
       button.addEventListener('click', () => loadTape(index, true));
       return button;
     }));
@@ -192,8 +239,10 @@ export function setupCassettePlayer() {
   function updateProgress() {
     const total = Number.isFinite(audio.duration) ? audio.duration : 0;
     const position = Number.isFinite(audio.currentTime) ? audio.currentTime : 0;
-    if (!seeking) progress.value = total ? Math.round((position / total) * 1000) : 0;
+    const played = total ? position / total : 0;
+    if (!seeking) progress.value = Math.round(played * 1000);
     paintRange(progress);
+    player.style.setProperty('--played', played.toFixed(4));
     current.textContent = formatTime(position);
     duration.textContent = formatTime(total);
   }

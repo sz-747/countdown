@@ -53,22 +53,33 @@
 
   <aside class="cassette-player" id="cassette-player" aria-label="Music player">
     <div class="cassette-shell" id="cassette-shell">
+      <span class="screw tl" aria-hidden="true"></span>
+      <span class="screw tr" aria-hidden="true"></span>
+      <span class="screw bl" aria-hidden="true"></span>
+      <span class="screw br" aria-hidden="true"></span>
+
       <div class="cassette-top">
         <div class="cassette-meta">
-          <div class="cassette-label">Study tapes</div>
+          <div class="cassette-label" id="cassette-label">Study tapes</div>
           <div class="cassette-title" id="cassette-title">Load a tape</div>
         </div>
-        <button class="cassette-file-btn" type="button" id="cassette-file-btn" title="Add tapes" aria-label="Add tapes">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
-          <span>Tapes</span>
-        </button>
+        <div class="cassette-actions">
+          <button class="cassette-icon-btn" type="button" id="cassette-file-btn" title="Add tapes" aria-label="Add tapes">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>
+          </button>
+          <button class="cassette-icon-btn" type="button" id="cassette-min" title="Minimize" aria-label="Minimize player">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3.5 8h9"/></svg>
+          </button>
+        </div>
         <input class="cassette-file-input" id="cassette-file-input" type="file" accept="audio/*,video/mp4,video/*" multiple>
       </div>
 
       <div class="cassette-window" aria-hidden="true">
-        <div class="reel left"><span></span></div>
-        <div class="tape-line"></div>
-        <div class="reel right"><span></span></div>
+        <div class="cassette-eq" id="cassette-eq"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="reel left"><span class="hub"></span></div>
+        <div class="tape-bridge"></div>
+        <div class="reel right"><span class="hub"></span></div>
+        <div class="cassette-gloss"></div>
       </div>
 
       <div class="cassette-time">
@@ -106,6 +117,18 @@
 
       <div class="cassette-list" id="cassette-list" aria-label="Playlist"></div>
     </div>
+
+    <div class="cassette-mini" id="cassette-mini">
+      <button type="button" class="cassette-mini-play" id="cassette-mini-play" title="Play" aria-label="Play">
+        <svg class="icon-play" viewBox="0 0 22 22" fill="currentColor" aria-hidden="true"><path d="M7 4.6a.9.9 0 0 1 1.37-.77l9 6.4a.9.9 0 0 1 0 1.54l-9 6.4A.9.9 0 0 1 7 17.4Z"/></svg>
+        <svg class="icon-pause" viewBox="0 0 22 22" fill="currentColor" aria-hidden="true"><rect x="5.5" y="4.5" width="4" height="13" rx="1.2"/><rect x="12.5" y="4.5" width="4" height="13" rx="1.2"/></svg>
+      </button>
+      <button type="button" class="cassette-mini-expand" id="cassette-mini-expand" title="Expand player" aria-label="Expand player">
+        <span class="cassette-mini-reel" aria-hidden="true"></span>
+        <span class="cassette-mini-title" id="cassette-mini-title">Load a tape</span>
+      </button>
+    </div>
+
     <audio id="cassette-audio" preload="metadata"></audio>
   </aside>
 
