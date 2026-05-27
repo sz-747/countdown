@@ -3,14 +3,17 @@ const PLAYER_TRACK_KEY = 'countdown.cassette.track.v1';
 const PLAYER_MINIMIZED_KEY = 'countdown.cassette.minimized.v1';
 const PLAYER_POS_KEY = 'countdown.cassette.pos.v1';
 
+// Hosted on Vercel Blob (public store) so the tracks stream on the deployed
+// site. Source videos live only on the local machine and are too large to
+// commit; these are audio-only MP3 extractions.
 const BUILT_IN_TAPES = [
   {
     title: 'Rain sound calm piano',
-    src: 'music/2-HOUR STUDY WITH ME _ Rain sound🌧️ Calm Piano ️🎹  _ Pomodoro 50_10 _ Sunrise.mp4',
+    src: 'https://voinwmxtynlery6b.public.blob.vercel-storage.com/rain-piano-study.mp3',
   },
   {
     title: 'Peaceful piano covers',
-    src: 'music/Piano Covers Mix 2021 - Peaceful Piano Music to Study_Sleep_Read to by Ambient Fruits.mp4',
+    src: 'https://voinwmxtynlery6b.public.blob.vercel-storage.com/peaceful-piano-covers.mp3',
   },
 ];
 
