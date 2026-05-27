@@ -148,6 +148,33 @@
   .cassette-player.dragging { cursor: grabbing; user-select: none; }
   .cassette-player.dragging * { cursor: grabbing !important; }
 
+  /* Floating screen: the whole player gently bobs as if hovering in place.
+     Paused while dragging so it tracks the cursor cleanly, and disabled for
+     users who prefer reduced motion. Uses transform only; position is set via
+     left/top, so the two never fight. */
+  @keyframes cassette-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .cassette-player:not(.dragging) {
+      animation: cassette-float 6.5s ease-in-out infinite;
+    }
+  }
+
+  /* Smooth pop when expanding or minimizing. */
+  @keyframes cassette-pop {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .cassette-shell,
+    .cassette-player.minimized .cassette-mini {
+      animation: cassette-pop 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      transform-origin: bottom right;
+    }
+  }
+
   /* --- Retro shell: ribbed plastic body with corner screws --- */
   .cassette-shell {
     position: relative;
@@ -255,8 +282,26 @@
   }
 
   .cassette-icon-btn svg { width: 13px; height: 13px; display: block; }
-  .cassette-icon-btn:hover { color: var(--fg); }
+  .cassette-icon-btn:hover {
+    color: var(--fg);
+    background: linear-gradient(180deg, #3d404a, #272a31);
+    border-color: rgba(0, 0, 0, 0.6);
+  }
   .cassette-icon-btn:active { transform: translateY(1px); }
+
+  /* Minimize reads as the primary "collapse" affordance: a touch larger,
+     warm-tinted icon, and an amber glow on hover so it stands apart from the
+     add-tapes button beside it. */
+  .cassette-icon-btn--min {
+    width: 28px;
+    color: var(--cassette-cream);
+  }
+  .cassette-icon-btn--min svg { width: 15px; height: 15px; }
+  .cassette-icon-btn--min:hover {
+    color: #ffe1ad;
+    background: linear-gradient(180deg, #4a4334, #2c2820);
+    box-shadow: 0 1px 0 rgba(244, 241, 234, 0.08) inset, 0 0 0 1px rgba(232, 184, 107, 0.35);
+  }
   .cassette-file-input { display: none; }
 
   /* --- Tape window: glossy plastic over winding reels --- */
