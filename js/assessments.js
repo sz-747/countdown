@@ -10,24 +10,12 @@ import { buildCategoryEditCard, removeCard } from './categories.js';
 import { update } from './refresh.js';
 import { breakdown } from './countdown.js';
 
-const DEFAULT_ASSESSMENTS = [
-  { id: 'eng-at3',      label: 'English Adv · AT3',   name: 'English Advanced AT3',     dateStr: '2026-05-22', timeStr: '08:30' },
-  { id: 'chem-at3',     label: 'Chem · AT3',          name: 'Chemistry AT3',            dateStr: '2026-05-26', timeStr: '' },
-  { id: 'legal-at3',    label: 'Legal · AT3',         name: 'Legal — Family Law AT3',   dateStr: '2026-05-29', timeStr: '14:20' },
-  { id: 'eng3-at2',     label: 'English Ext 1 · AT2', name: '3U English Portfolio AT2', dateStr: '2026-06-01', timeStr: '07:30' },
-  { id: 'math-adv',     label: 'Math Advanced',       name: 'Math Advanced',            dateStr: '2026-06-03', timeStr: '' },
-  { id: 'math-ext1',    label: 'Math Ext 1',          name: '3U Math',                  dateStr: '2026-06-15', timeStr: '' },
-  { id: 'software-at3', label: 'Software · AT3',      name: 'Software Project AT3',     dateStr: '2026-06-24', timeStr: '' },
-];
+// New visitors start with an empty Assessments grid — no demo cards seeded.
+const DEFAULT_ASSESSMENTS = [];
 const ASSESSMENTS_SEED_KEY = 'countdown.assessments.seeded.v1';
 
-export const UA = [
-  { id: 'cloud-beta',    label: 'Cloud · Beta',        name: 'Cloud Beta Launch',      date: new Date(2026, 4, 23, 0, 0), noTime: true },
-  { id: 'first-client',  label: 'Client · Onboard',    name: 'First client onboard',   date: new Date(2026, 4, 24, 0, 0), noTime: true },
-  { id: 'codex-end',     label: 'Codex · End',         name: 'Codex end',              date: new Date(2026, 4, 29, 0, 0), noTime: true },
-  { id: 'claude-20x',    label: 'Claude 20x · End',    name: 'Claude 20x end',         date: new Date(2026, 5, 4, 0, 0), noTime: true },
-  { id: 'v2-ship',       label: 'V2 · Ship',           name: 'V2 ship',                date: new Date(2026, 5, 6, 0, 0), noTime: true },
-];
+// UA cards are not shown by default — empty for all visitors.
+export const UA = [];
 
 const CUSTOM_ASSESS_KEY = 'countdown.customAssessments.v1';
 

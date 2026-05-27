@@ -10,11 +10,6 @@ const SEED_KEY  = 'countdown.exams.seeded.v2';
 const DEFAULT_EXAMS = [
   { date: '2026-10-13', subject: 'English Advanced Paper 1' },
   { date: '2026-10-14', subject: 'English Advanced Paper 2' },
-  { date: '2026-10-19', subject: 'Mathematics Advanced' },
-  { date: '2026-10-23', subject: 'Mathematics Extension 1' },
-  { date: '2026-10-27', subject: 'Software Engineering' },
-  { date: '2026-10-28', subject: 'English Extension 1' },
-  { date: '2026-11-02', subject: 'Legal Studies' },
 ];
 
 export function seedDefaultExams() {
